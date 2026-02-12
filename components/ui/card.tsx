@@ -12,7 +12,7 @@ function Card({
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "bg-card border-0 text-card-foreground flex flex-col gap-6 rounded-xl mt-3",
         textured && "relative overflow-hidden",
         className
       )}
@@ -20,12 +20,12 @@ function Card({
     >
       {textured && (
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 pointer-events-none"
+          className="py-6 absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 pointer-events-none"
           style={{ backgroundImage: "url('/card-texture.svg')" }}
         />
       )}
       {textured ? (
-        <div className="relative z-10 flex flex-col gap-6 flex-1">{children}</div>
+        <div className="py-6 relative z-10 flex flex-col gap-6 flex-1">{children}</div>
       ) : (
         children
       )}

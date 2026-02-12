@@ -168,6 +168,44 @@ body {
   background-size: 40px 40px;
 }
 
+/* Card background patterns - vary by item for visual differentiation */
+.card-pattern-dots {
+  background-image: radial-gradient(circle, oklch(0.25 0.015 240 / 0.06) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.card-pattern-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 8px,
+    oklch(0.25 0.015 240 / 0.04) 8px,
+    oklch(0.25 0.015 240 / 0.04) 16px
+  );
+}
+
+.card-pattern-waves {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='20' viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 15 0, 30 10 T 60 10' stroke='rgba(0,0,0,0.06)' fill='none' stroke-width='1'/%3E%3Cpath d='M0 14 Q 15 4, 30 14 T 60 14' stroke='rgba(0,0,0,0.04)' fill='none' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 60px 20px;
+}
+
+.card-pattern-cross {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 19px, oklch(0.25 0.015 240 / 0.05) 19px, oklch(0.25 0.015 240 / 0.05) 20px),
+    repeating-linear-gradient(90deg, transparent, transparent 19px, oklch(0.25 0.015 240 / 0.05) 19px, oklch(0.25 0.015 240 / 0.05) 20px);
+  background-size: 20px 20px;
+}
+
+.card-pattern-hex {
+  background-image: url("data:image/svg+xml,%3Csvg width='28' height='24' viewBox='0 0 28 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 12 L7 0 L21 0 L28 12 L21 24 L7 24 Z' fill='none' stroke='rgba(0,0,0,0.04)' stroke-width='0.5'/%3E%3Cpath d='M14 0 L28 12 L14 24 L0 12 Z' fill='none' stroke='rgba(0,0,0,0.03)' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 28px 24px;
+}
+
+.card-pattern-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
 /* Subtle wave pattern for cards */
 .wave-pattern {
   background-image: url("data:image/svg+xml,%3Csvg width='100' height='20' viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 0, 50 10 T 100 10' stroke='rgba(0,188,212,0.05)' fill='none' stroke-width='2'/%3E%3C/svg%3E");

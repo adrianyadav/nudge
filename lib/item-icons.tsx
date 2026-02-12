@@ -69,6 +69,39 @@ export const ITEM_ACCENT_COLORS: { iconBg: string; borderLeft: string }[] = [
 
 const DEFAULT_ACCENT = ITEM_ACCENT_COLORS[ITEM_ACCENT_COLORS.length - 1];
 
+/** Card background pattern classes - vary by item for visual differentiation */
+const CARD_PATTERN_CLASSES = [
+  'card-pattern-dots',
+  'card-pattern-stripes',
+  'card-pattern-waves',
+  'card-pattern-cross',
+  'card-pattern-hex',
+  'card-pattern-noise',
+] as const;
+
+/**
+ * Returns the accent index (0 to length-1) for an item name.
+ * -1 if no match (uses default).
+ */
+export function getItemAccentIndex(name: string): number {
+  const lower = name.toLowerCase().trim();
+  for (let i = 0; i < ICON_MAP.length; i++) {
+    if (ICON_MAP[i].keywords.some((k) => lower.includes(k))) {
+      return i;
+    }
+  }
+  return ICON_MAP.length; /* default index */
+}
+
+/**
+ * Returns the card background pattern class for an item name.
+ * Maps accent index to one of 6 patterns so different item types get different looks.
+ */
+export function getCardPattern(name: string): string {
+  const index = getItemAccentIndex(name);
+  return CARD_PATTERN_CLASSES[index % CARD_PATTERN_CLASSES.length];
+}
+
 /**
  * Returns the best-matching Lucide icon for an item name.
  * Used on cards so users can differentiate items at a glance.

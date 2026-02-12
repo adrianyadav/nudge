@@ -38,34 +38,38 @@ export function getStatusColors(status: ExpiryStatus): {
   glow: string;
   tint: string;
   iconBg: string;
+  badgeBg: string;
 } {
   switch (status) {
     case 'safe':
       return {
-        bg: 'bg-green-50',
+        bg: 'bg-gradient-to-br from-green-50 to-emerald-100',
         border: 'border-green-500',
         text: 'text-green-700',
         glow: 'shadow-[0_0_20px_rgba(34,197,94,0.25)]',
         tint: 'bg-emerald-500/10',
         iconBg: 'bg-gradient-to-br from-emerald-500 to-green-600',
+        badgeBg: 'bg-green-500/20 dark:bg-green-500/25',
       };
     case 'approaching':
       return {
-        bg: 'bg-amber-50',
+        bg: 'bg-gradient-to-br from-amber-50 to-orange-100',
         border: 'border-amber-500',
         text: 'text-amber-700',
         glow: 'shadow-[0_0_20px_rgba(245,158,11,0.25)]',
         tint: 'bg-amber-500/10',
         iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
+        badgeBg: 'bg-amber-500/20 dark:bg-amber-500/25',
       };
     case 'critical':
       return {
-        bg: 'bg-red-50',
+        bg: 'bg-gradient-to-br from-red-50 to-rose-100',
         border: 'border-red-500',
         text: 'text-red-700',
         glow: 'shadow-[0_0_20px_rgba(239,68,68,0.25)]',
         tint: 'bg-red-500/10',
         iconBg: 'bg-gradient-to-br from-red-500 to-rose-600',
+        badgeBg: 'bg-red-500/20 dark:bg-red-500/25',
       };
   }
 }

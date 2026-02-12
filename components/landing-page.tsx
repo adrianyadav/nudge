@@ -2,11 +2,27 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
-import { Calendar, Sparkles, Bell, Shield } from 'lucide-react';
+import {
+  Calendar,
+  Sparkles,
+  Bell,
+  Shield,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+} from 'lucide-react';
 import { NudgeIcon } from '@/components/nudge-icon';
+import { getStatusColors } from '@/lib/expiry-utils';
+import type { ExpiryStatus } from '@/lib/types';
+
+const STATUS_ICONS: Record<ExpiryStatus, typeof CheckCircle2> = {
+  safe: CheckCircle2,
+  approaching: Clock,
+  critical: AlertTriangle,
+};
 
 export function LandingPage() {
   const router = useRouter();
@@ -145,56 +161,76 @@ export function LandingPage() {
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
 
-          <Card className="p-8 bg-card/90 backdrop-blur-xl border shadow-2xl relative z-10">
+          <Card className="p-8 bg-card/90 backdrop-blur-xl border-0 shadow-2xl relative z-10">
             <div className="grid md:grid-cols-3 gap-6">
-              {/* Demo Cards */}
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="p-6 rounded-xl bg-emerald-50 border-2 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-emerald-900">
-                    Passport
-                  </h3>
-                  <Badge className="bg-emerald-500 text-white border-0 font-medium">
-                    SAFE
-                  </Badge>
-                </div>
-                <p className="text-5xl font-bold text-emerald-700 mb-2">2028</p>
-                <p className="text-sm text-emerald-600 font-medium">
-                  850 days left
-                </p>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="p-6 rounded-xl bg-amber-50 border-2 border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-amber-900">Gym Pass</h3>
-                  <Badge className="bg-amber-500 text-white border-0 font-medium">
-                    APPROACHING
-                  </Badge>
-                </div>
-                <p className="text-5xl font-bold text-amber-700 mb-2">2026</p>
-                <p className="text-sm text-amber-600 font-medium">
-                  5 days left
-                </p>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="p-6 rounded-xl bg-red-50 border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-red-900">Milk</h3>
-                  <Badge className="bg-red-500 text-white border-0 font-medium">
-                    CRITICAL
-                  </Badge>
-                </div>
-                <p className="text-5xl font-bold text-red-700 mb-2">2026</p>
-                <p className="text-sm text-red-600 font-medium">1 day left</p>
-              </motion.div>
+              {[
+                {
+                  name: 'Passport',
+                  status: 'safe' as ExpiryStatus,
+                  year: '2028',
+                  daysLeft: '850 days left',
+                },
+                {
+                  name: 'Gym Pass',
+                  status: 'approaching' as ExpiryStatus,
+                  year: '2026',
+                  daysLeft: '5 days left',
+                },
+                {
+                  name: 'Milk',
+                  status: 'critical' as ExpiryStatus,
+                  year: '2026',
+                  daysLeft: '1 day left',
+                },
+              ].map((item) => {
+                const colors = getStatusColors(item.status);
+                const StatusIcon = STATUS_ICONS[item.status];
+                return (
+                  <motion.div key={item.name} whileHover={{ scale: 1.05 }}>
+                    <Card
+                      textured
+                      className={`
+                        relative transition-all duration-300 overflow-hidden
+                        ${colors.bg} ${colors.glow}
+                      `}
+                    >
+                      <div
+                        className={`absolute inset-0 ${colors.tint} pointer-events-none`}
+                      />
+                      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3 relative z-10">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`shrink-0 w-12 h-12 rounded-xl ${colors.iconBg} flex items-center justify-center shadow-sm`}
+                          >
+                            <StatusIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <h3 className={`text-xl font-semibold ${colors.text}`}>
+                            {item.name}
+                          </h3>
+                        </div>
+                        <Badge
+                          title={item.status}
+                          className={`
+                            inline-flex items-center justify-center rounded-full p-1.5
+                            ${colors.badgeBg} ${colors.text} border ${colors.border}
+                            shadow-sm
+                          `}
+                        >
+                          <StatusIcon className="size-4 shrink-0" />
+                        </Badge>
+                      </CardHeader>
+                      <CardContent className="space-y-2 relative z-10">
+                        <p className={`text-5xl font-bold ${colors.text}`}>
+                          {item.year}
+                        </p>
+                        <p className={`text-sm font-medium opacity-75 ${colors.text}`}>
+                          {item.daysLeft}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </div>
           </Card>
         </motion.div>

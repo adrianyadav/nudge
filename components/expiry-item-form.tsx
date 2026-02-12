@@ -119,7 +119,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="border-border shadow-lg relative overflow-hidden wave-pattern">
+      <Card className="border-border shadow-lg relative overflow-hidden wave-pattern py-6">
         {/* Subtle shimmer strip at top */}
         <div className="absolute top-0 left-0 right-0 h-1 shimmer pointer-events-none rounded-t-lg" />
         <CardHeader>

@@ -2,26 +2,93 @@
 
 import { ExpiryItemWithStatus } from '@/lib/types';
 import { getStatusColors } from '@/lib/expiry-utils';
-import { getItemIcon, getItemAccent } from '@/lib/item-icons';
-import { useState } from 'react';
+import { getItemIcon, getItemAccent, getCardPattern } from '@/lib/item-icons';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Edit3 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { updateItemAction } from '@/app/actions/item-actions';
+import { Trash2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import type { ExpiryStatus } from '@/lib/types';
+
+const STATUS_ICONS: Record<ExpiryStatus, typeof CheckCircle2> = {
+  safe: CheckCircle2,
+  approaching: Clock,
+  critical: AlertTriangle,
+};
+
+const MONTHS = [
+  { value: '1', label: 'Jan' },
+  { value: '2', label: 'Feb' },
+  { value: '3', label: 'Mar' },
+  { value: '4', label: 'Apr' },
+  { value: '5', label: 'May' },
+  { value: '6', label: 'Jun' },
+  { value: '7', label: 'Jul' },
+  { value: '8', label: 'Aug' },
+  { value: '9', label: 'Sep' },
+  { value: '10', label: 'Oct' },
+  { value: '11', label: 'Nov' },
+  { value: '12', label: 'Dec' },
+];
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
 
 interface ExpiryItemCardProps {
   item: ExpiryItemWithStatus;
-  onEdit: (item: ExpiryItemWithStatus) => void;
   onDelete: (id: number) => void;
+  onDateUpdated?: () => void;
 }
 
-export function ExpiryItemCard({ item, onEdit, onDelete }: ExpiryItemCardProps) {
+export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [editingField, setEditingField] = useState<'year' | 'month' | 'day' | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const colors = getStatusColors(item.status);
   const ItemIcon = getItemIcon(item.name);
+  const StatusIcon = STATUS_ICONS[item.status];
   const accent = getItemAccent(item.name);
+  const cardPattern = getCardPattern(item.name);
+
+  const expDate = new Date(item.expiry_date);
+  const year = expDate.getFullYear();
+  const monthNum = expDate.getMonth() + 1;
+  const month = expDate.toLocaleString('en-US', { month: 'short' });
+  const day = expDate.getDate();
+
+  const currentYear = new Date().getFullYear();
+  const daysInMonth = getDaysInMonth(year, monthNum);
+  const days = Array.from({ length: daysInMonth }, (_, i) => (i + 1).toString());
+
+  const saveDate = useCallback(
+    async (newYear: number, newMonth: number, newDay: number) => {
+      const lastDay = getDaysInMonth(newYear, newMonth);
+      const clampedDay = Math.min(newDay, lastDay);
+      const expiryDate = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`;
+      const formData = new FormData();
+      formData.append('id', item.id.toString());
+      formData.append('name', item.name);
+      formData.append('expiry_date', expiryDate);
+      setIsUpdating(true);
+      await updateItemAction(formData);
+      setIsUpdating(false);
+      setEditingField(null);
+      onDateUpdated?.();
+    },
+    [item.id, item.name, onDateUpdated]
+  );
 
   const handleDelete = async () => {
     if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
@@ -30,30 +97,20 @@ export function ExpiryItemCard({ item, onEdit, onDelete }: ExpiryItemCardProps) 
     }
   };
 
-  const expDate = new Date(item.expiry_date);
-  const year = expDate.getFullYear();
-  const month = expDate.toLocaleString('en-US', { month: 'short' });
-  const day = expDate.getDate();
-
   const card = (
     <Card
       textured
       className={`
-        relative border-2 transition-all duration-300
-        ${colors.bg} ${colors.border} ${colors.glow}
-        ${accent.borderLeft}
+        relative transition-all duration-300
+        ${colors.bg} ${colors.glow}
         ${isDeleting ? 'opacity-50' : ''}
         overflow-hidden
       `}
     >
       {/* Status tint overlay */}
       <div className={`absolute inset-0 ${colors.tint} pointer-events-none`} />
-      {/* Diagonal accent stripe */}
-      <div
-        className="absolute -right-12 -top-12 h-32 w-32 rotate-45 bg-white/20 pointer-events-none"
-      />
-
-      <div className="absolute inset-0 grid-pattern opacity-20 pointer-events-none" />
+      {/* Item-specific background pattern */}
+      <div className={`absolute inset-0 ${cardPattern} opacity-30 pointer-events-none`} />
       <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white/30 rounded-tr-lg pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/30 rounded-bl-lg pointer-events-none" />
 
@@ -76,12 +133,14 @@ export function ExpiryItemCard({ item, onEdit, onDelete }: ExpiryItemCardProps) 
         </div>
         <Badge
           variant="outline"
+          title={item.status}
           className={`
-            ${colors.bg} ${colors.text} border ${colors.border}
-            uppercase text-xs font-medium
+            inline-flex items-center justify-center rounded-full p-1.5
+            ${colors.badgeBg} ${colors.text} border ${colors.border}
+            shadow-sm
           `}
         >
-          {item.status}
+          <StatusIcon className="size-4 shrink-0" />
         </Badge>
       </CardHeader>
 
@@ -93,10 +152,100 @@ export function ExpiryItemCard({ item, onEdit, onDelete }: ExpiryItemCardProps) 
           transition={{ delay: 0.1 }}
         >
           <div className="flex items-baseline gap-2">
-            <p className="text-4xl font-bold">{year}</p>
-            <p className="text-lg font-medium opacity-75">
-              {month} {day}
-            </p>
+            {editingField === 'year' ? (
+              <Input
+                type="number"
+                defaultValue={year}
+                min={currentYear}
+                max={currentYear + 50}
+                className="h-10 w-24 text-2xl font-bold border-border"
+                autoFocus
+                disabled={isUpdating}
+                onBlur={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val) && val >= currentYear && val <= currentYear + 50) {
+                    saveDate(val, monthNum, day);
+                  } else {
+                    setEditingField(null);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const val = parseInt((e.target as HTMLInputElement).value, 10);
+                    if (!isNaN(val) && val >= currentYear && val <= currentYear + 50) {
+                      saveDate(val, monthNum, day);
+                    } else {
+                      setEditingField(null);
+                    }
+                  }
+                  if (e.key === 'Escape') setEditingField(null);
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingField('year')}
+                className="text-4xl font-bold cursor-pointer hover:underline hover:bg-white/20 rounded px-1 -mx-1 transition-colors"
+              >
+                {year}
+              </button>
+            )}
+            <span className="text-lg font-medium opacity-75">
+              {editingField === 'month' ? (
+                <Select
+                  value={monthNum.toString()}
+                  onValueChange={(val) => saveDate(year, parseInt(val, 10), day)}
+                  open={editingField === 'month'}
+                  onOpenChange={(open) => !open && setEditingField(null)}
+                >
+                  <SelectTrigger className="h-auto py-1 px-2 text-lg font-medium opacity-75 w-fit border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingField('month')}
+                  className="cursor-pointer hover:underline hover:bg-white/20 rounded px-1 -mx-1 transition-colors"
+                >
+                  {month}
+                </button>
+              )}{' '}
+              {editingField === 'day' ? (
+                <Select
+                  value={day.toString()}
+                  onValueChange={(val) => saveDate(year, monthNum, parseInt(val, 10))}
+                  open={editingField === 'day'}
+                  onOpenChange={(open) => !open && setEditingField(null)}
+                >
+                  <SelectTrigger className="h-auto py-1 px-2 text-lg font-medium opacity-75 w-fit border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {days.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingField('day')}
+                  className="cursor-pointer hover:underline hover:bg-white/20 rounded px-1 -mx-1 transition-colors"
+                >
+                  {day}
+                </button>
+              )}
+            </span>
           </div>
           <motion.p
             className="text-sm opacity-75 font-medium"
@@ -123,21 +272,11 @@ export function ExpiryItemCard({ item, onEdit, onDelete }: ExpiryItemCardProps) 
           transition={{ delay: 0.2 }}
         >
           <Button
-            onClick={() => onEdit(item)}
-            variant="outline"
-            size="sm"
-            disabled={isDeleting}
-            className="border-border hover:bg-background gap-2 flex-1"
-          >
-            <Edit3 className="w-3 h-3" />
-            Edit
-          </Button>
-          <Button
             onClick={handleDelete}
             variant="destructive"
             size="sm"
             disabled={isDeleting}
-            className="gap-2 flex-1"
+            className="gap-2 flex-1 max-w-fit right-0"
           >
             {isDeleting ? (
               <>
@@ -151,7 +290,6 @@ export function ExpiryItemCard({ item, onEdit, onDelete }: ExpiryItemCardProps) 
             ) : (
               <>
                 <Trash2 className="w-3 h-3" />
-                Delete
               </>
             )}
           </Button>

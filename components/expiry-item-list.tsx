@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useLayoutEffect, useRef } from 'react';
 import { useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExpiryItemWithStatus, ExpiryStatus } from '@/lib/types';
@@ -9,16 +9,43 @@ import { deleteItemAction } from '@/app/actions/item-actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Clock, AlertTriangle, type LucideIcon } from 'lucide-react';
 
 interface ExpiryItemListProps {
   items: ExpiryItemWithStatus[];
-  onEditItem: (item: ExpiryItemWithStatus) => void;
+  onItemsChange?: () => void;
 }
 
-const STATUS_FILTERS: { status: ExpiryStatus; label: string; activeClass: string }[] = [
-  { status: 'safe', label: 'Safe', activeClass: 'bg-green-500/20 text-green-800 border-green-500 ring-2 ring-green-500/40' },
-  { status: 'approaching', label: 'Approaching', activeClass: 'bg-amber-500/20 text-amber-800 border-amber-500 ring-2 ring-amber-500/40' },
-  { status: 'critical', label: 'Critical', activeClass: 'bg-red-500/20 text-red-800 border-red-500 ring-2 ring-red-500/40' },
+const STATUS_FILTERS: {
+  status: ExpiryStatus;
+  label: string;
+  icon: LucideIcon;
+  activeClass: string;
+  badgeActiveClass: string;
+}[] = [
+
+  {
+    status: 'critical',
+    label: 'Critical',
+    icon: AlertTriangle,
+    activeClass: 'bg-red-500/20 text-red-800 border-red-500 ring-2 ring-red-500/30 dark:bg-red-500/25 dark:text-red-200 dark:border-red-500/80 hover:bg-red-500/30 hover:text-red-900 dark:hover:bg-red-500/35 dark:hover:text-red-100 hover:border-transparent hover:ring-0 hover:outline-none',
+    badgeActiveClass: 'bg-red-500/30 text-red-800 dark:text-red-200',
+  },
+  {
+    status: 'approaching',
+    label: 'Approaching',
+    icon: Clock,
+    activeClass: 'bg-amber-500/20 text-amber-800 border-amber-500 ring-2 ring-amber-500/30 dark:bg-amber-500/25 dark:text-amber-200 dark:border-amber-500/80 hover:bg-amber-500/30 hover:text-amber-900 dark:hover:bg-amber-500/35 dark:hover:text-amber-100 hover:border-transparent hover:ring-0 hover:outline-none',
+    badgeActiveClass: 'bg-amber-500/30 text-amber-800 dark:text-amber-200',
+  },
+  {
+    status: 'safe',
+    label: 'Safe',
+    icon: CheckCircle2,
+    activeClass: 'bg-green-500/20 text-green-800 border-green-500 ring-2 ring-green-500/30 dark:bg-green-500/25 dark:text-green-200 dark:border-green-500/80 hover:bg-green-500/30 hover:text-green-900 dark:hover:bg-green-500/35 dark:hover:text-green-100 hover:border-transparent hover:ring-0 hover:outline-none',
+    badgeActiveClass: 'bg-green-500/30 text-green-800 dark:text-green-200',
+  },
+  
 ];
 
 /** Sort by expiry date ascending (soonest to expire first) */
@@ -28,13 +55,32 @@ function sortByExpiryDate(items: ExpiryItemWithStatus[]): ExpiryItemWithStatus[]
   );
 }
 
-export function ExpiryItemList({ items, onEditItem }: ExpiryItemListProps) {
+/** Default filters: critical only if any exist, else approaching only. Safe only when user clicks it. */
+function getDefaultFilters(items: ExpiryItemWithStatus[]): Record<ExpiryStatus, boolean> {
+  const criticalCount = items.filter((i) => i.status === 'critical').length;
+  const approachingCount = items.filter((i) => i.status === 'approaching').length;
+  if (criticalCount > 0) return { safe: false, approaching: false, critical: true };
+  if (approachingCount > 0) return { safe: false, approaching: true, critical: false };
+  return { safe: true, approaching: false, critical: false };
+}
+
+export function ExpiryItemList({ items, onItemsChange }: ExpiryItemListProps) {
   const [statusFilters, setStatusFilters] = useState<Record<ExpiryStatus, boolean>>({
     safe: true,
     approaching: true,
     critical: true,
   });
+  const hasInitializedFilters = useRef(false);
   const [isPending, startTransition] = useTransition();
+
+  useLayoutEffect(() => {
+    if (items.length === 0) {
+      hasInitializedFilters.current = false;
+    } else if (!hasInitializedFilters.current) {
+      setStatusFilters(getDefaultFilters(items));
+      hasInitializedFilters.current = true;
+    }
+  }, [items]);
 
   const sortedItems = sortByExpiryDate(items);
   const filteredItems = sortedItems.filter((item) => statusFilters[item.status]);
@@ -126,28 +172,34 @@ export function ExpiryItemList({ items, onEditItem }: ExpiryItemListProps) {
         <p className="text-xs text-gray-500">{criticalCount} critical</p>
       </motion.div>
 
-      {/* 3-column status filters */}
+      {/* Status filters */}
       <motion.div
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="grid grid-cols-3 gap-2"
+        className="flex flex-wrap gap-2"
       >
-        {STATUS_FILTERS.map(({ status, label, activeClass }) => (
+        {STATUS_FILTERS.map(({ status, label, icon: Icon, activeClass, badgeActiveClass }) => (
           <Button
             key={status}
             type="button"
             variant="outline"
             size="sm"
-            className={`border transition-all ${
+            className={`border transition-all duration-200 ${
               statusFilters[status]
                 ? activeClass
-                : 'border-border bg-muted/50 text-muted-foreground opacity-70 hover:opacity-90'
+                : 'border-border bg-muted/50 text-muted-foreground opacity-60 hover:opacity-100 hover:bg-muted/80 hover:border-transparent hover:ring-0 hover:outline-none'
             }`}
             onClick={() => toggleFilter(status)}
           >
+            <Icon className="size-4 shrink-0" />
             <span className="font-medium">{label}</span>
-            <Badge variant="secondary" className="ml-2 bg-black/10 text-inherit font-semibold">
+            <Badge
+              variant="secondary"
+              className={`ml-2 font-semibold ${
+                statusFilters[status] ? badgeActiveClass : 'bg-muted text-muted-foreground'
+              }`}
+            >
               {countByStatus(status)}
             </Badge>
           </Button>
@@ -165,7 +217,7 @@ export function ExpiryItemList({ items, onEditItem }: ExpiryItemListProps) {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2 }}
             >
-              <ExpiryItemCard item={item} onEdit={onEditItem} onDelete={handleDelete} />
+              <ExpiryItemCard item={item} onDelete={handleDelete} onDateUpdated={onItemsChange} />
             </motion.div>
           ))}
         </AnimatePresence>

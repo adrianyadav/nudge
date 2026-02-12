@@ -8,14 +8,12 @@ import { ExpiryItemList } from '@/components/expiry-item-list';
 import { getItemsAction } from '@/app/actions/item-actions';
 import { ExpiryItemWithStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Dialog } from '@/components/ui/dialog';
 import { NudgeIcon } from '@/components/nudge-icon';
 import { LogOut } from 'lucide-react';
 
 export function Dashboard() {
   const { data: session } = useSession();
   const [items, setItems] = useState<ExpiryItemWithStatus[]>([]);
-  const [editingItem, setEditingItem] = useState<ExpiryItemWithStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,11 +25,6 @@ export function Dashboard() {
     const data = await getItemsAction();
     setItems(data);
     setIsLoading(false);
-  };
-
-  const handleCloseEditModal = () => {
-    setEditingItem(null);
-    loadItems();
   };
 
   const handleSignOut = async () => {
@@ -62,7 +55,7 @@ export function Dashboard() {
               Nudge
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <div className="text-right hidden md:block">
               <p className="text-sm text-gray-600">Welcome back,</p>
               <p className="font-medium text-gray-800">
@@ -93,15 +86,6 @@ export function Dashboard() {
           />
         </motion.div>
 
-        {/* Edit modal - open when editing a card */}
-        <Dialog open={!!editingItem} onClose={handleCloseEditModal}>
-          <ExpiryItemForm
-            editingItem={editingItem ?? undefined}
-            onCancelEdit={handleCloseEditModal}
-            onItemCreated={loadItems}
-          />
-        </Dialog>
-
         {/* Items List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -118,7 +102,7 @@ export function Dashboard() {
               <p className="text-gray-500 mt-4">Loading your items...</p>
             </div>
           ) : (
-            <ExpiryItemList items={items} onEditItem={setEditingItem} />
+            <ExpiryItemList items={items} onItemsChange={loadItems} />
           )}
         </motion.div>
       </div>
