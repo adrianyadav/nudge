@@ -3,10 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import {
   getAllItems,
+  getArchivedItems,
   createItem,
   updateItem,
   deleteItem,
-  deleteAllItems,
+  archiveItem,
+  archiveAllItems,
+  deleteAllArchivedItems,
 } from '@/lib/db';
 import { enrichItemWithStatus } from '@/lib/expiry-utils';
 import { ExpiryItemWithStatus } from '@/lib/types';
@@ -16,6 +19,13 @@ export async function getItemsAction(): Promise<ExpiryItemWithStatus[]> {
   const session = await auth();
   const userId = session?.user?.id ? parseInt(session.user.id) : undefined;
   const items = await getAllItems(userId);
+  return items.map(enrichItemWithStatus);
+}
+
+export async function getArchivedItemsAction(): Promise<ExpiryItemWithStatus[]> {
+  const session = await auth();
+  const userId = session?.user?.id ? parseInt(session.user.id) : undefined;
+  const items = await getArchivedItems(userId);
   return items.map(enrichItemWithStatus);
 }
 
@@ -62,6 +72,40 @@ export async function updateItemAction(formData: FormData) {
   }
 }
 
+export async function archiveItemAction(formData: FormData) {
+  const id = parseInt(formData.get('id') as string);
+
+  if (!id) {
+    return { success: false, error: 'Invalid ID' };
+  }
+
+  try {
+    await archiveItem(id);
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error('Error archiving item:', error);
+    return { success: false, error: 'Failed to archive item' };
+  }
+}
+
+export async function archiveAllItemsAction() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  try {
+    const userId = parseInt(session.user.id);
+    const count = await archiveAllItems(userId);
+    revalidatePath('/');
+    return { success: true, count };
+  } catch (error) {
+    console.error('Error archiving all items:', error);
+    return { success: false, error: 'Failed to archive items' };
+  }
+}
+
 export async function deleteAllItemsAction() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -70,7 +114,7 @@ export async function deleteAllItemsAction() {
 
   try {
     const userId = parseInt(session.user.id);
-    const count = await deleteAllItems(userId);
+    const count = await deleteAllArchivedItems(userId);
     revalidatePath('/');
     return { success: true, count };
   } catch (error) {

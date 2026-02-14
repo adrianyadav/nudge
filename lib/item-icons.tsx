@@ -18,6 +18,16 @@ import {
   Wine,
   Droplets,
   Package,
+  PawPrint,
+  Sparkles,
+  Ticket,
+  FileText,
+  Globe,
+  Baby,
+  Eye,
+  Sun,
+  Battery,
+  SprayCan,
 } from 'lucide-react';
 
 /**
@@ -40,6 +50,17 @@ const ICON_MAP: { keywords: string[]; icon: LucideIcon }[] = [
   { keywords: ['wine', 'beer', 'alcohol'], icon: Wine },
   { keywords: ['water', 'filter', 'bottle'], icon: Droplets },
   { keywords: ['card', 'credit', 'debit', 'bank'], icon: CreditCard },
+  // New categories
+  { keywords: ['pet', 'dog food', 'cat food', 'flea', 'puppy', 'kitten'], icon: PawPrint },
+  { keywords: ['makeup', 'cosmetic', 'skincare', 'beauty', 'lotion', 'shampoo', 'conditioner', 'moisturizer'], icon: Sparkles },
+  { keywords: ['coupon', 'voucher', 'gift card', 'promo', 'discount', 'reward'], icon: Ticket },
+  { keywords: ['lease', 'rent', 'contract', 'tenancy', 'mortgage', 'agreement'], icon: FileText },
+  { keywords: ['domain', 'hosting', 'ssl', 'website', 'server'], icon: Globe },
+  { keywords: ['baby', 'formula', 'diaper', 'nappy', 'infant'], icon: Baby },
+  { keywords: ['contact lens', 'lenses', 'eyewear', 'optical'], icon: Eye },
+  { keywords: ['sunscreen', 'spf', 'sunblock'], icon: Sun },
+  { keywords: ['battery', 'batteries'], icon: Battery },
+  { keywords: ['cleaning', 'detergent', 'bleach', 'disinfectant'], icon: SprayCan },
 ];
 
 const DEFAULT_ICON: LucideIcon = Package;
@@ -64,6 +85,18 @@ export const ITEM_ACCENT_COLORS: { iconBg: string; borderLeft: string }[] = [
   { iconBg: 'bg-fuchsia-500', borderLeft: 'border-l-2 border-l-fuchsia-500' },
   { iconBg: 'bg-teal-500', borderLeft: 'border-l-2 border-l-teal-500' },
   { iconBg: 'bg-emerald-500', borderLeft: 'border-l-2 border-l-emerald-500' },
+  // New categories
+  { iconBg: 'bg-lime-500', borderLeft: 'border-l-2 border-l-lime-500' },
+  { iconBg: 'bg-pink-300', borderLeft: 'border-l-2 border-l-pink-300' },
+  { iconBg: 'bg-yellow-500', borderLeft: 'border-l-2 border-l-yellow-500' },
+  { iconBg: 'bg-stone-600', borderLeft: 'border-l-2 border-l-stone-600' },
+  { iconBg: 'bg-blue-600', borderLeft: 'border-l-2 border-l-blue-600' },
+  { iconBg: 'bg-rose-300', borderLeft: 'border-l-2 border-l-rose-300' },
+  { iconBg: 'bg-purple-500', borderLeft: 'border-l-2 border-l-purple-500' },
+  { iconBg: 'bg-orange-400', borderLeft: 'border-l-2 border-l-orange-400' },
+  { iconBg: 'bg-green-600', borderLeft: 'border-l-2 border-l-green-600' },
+  { iconBg: 'bg-cyan-400', borderLeft: 'border-l-2 border-l-cyan-400' },
+  // Default
   { iconBg: 'bg-slate-500', borderLeft: 'border-l-2 border-l-slate-500' },
 ];
 
@@ -97,7 +130,18 @@ const ACCENT_CARD_COLORS: {
   { bg: 'bg-linear-to-br from-fuchsia-50 to-fuchsia-100', tint: 'bg-fuchsia-500/10', text: 'text-fuchsia-700', border: 'border-fuchsia-500', glow: 'shadow-[0_0_20px_rgba(217,70,239,0.25)]', iconBg: 'bg-linear-to-br from-fuchsia-500 to-fuchsia-600', badgeBg: 'bg-fuchsia-500/20' },
   { bg: 'bg-linear-to-br from-teal-50 to-teal-100', tint: 'bg-teal-500/10', text: 'text-teal-700', border: 'border-teal-500', glow: 'shadow-[0_0_20px_rgba(20,184,166,0.25)]', iconBg: 'bg-linear-to-br from-teal-500 to-teal-600', badgeBg: 'bg-teal-500/20' },
   { bg: 'bg-linear-to-br from-emerald-50 to-emerald-100', tint: 'bg-emerald-500/10', text: 'text-emerald-700', border: 'border-emerald-500', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.25)]', iconBg: 'bg-linear-to-br from-emerald-500 to-emerald-600', badgeBg: 'bg-emerald-500/20' },
-  { bg: 'bg-linear-to-br from-slate-50 to-slate-100', tint: 'bg-slate-500/10', text: 'text-slate-700', border: 'border-slate-500', glow: 'shadow-[0_0_20px_rgba(100,116,139,0.25)]', iconBg: 'bg-linear-to-br from-slate-500 to-slate-600', badgeBg: 'bg-slate-500/20' },
+  // New categories
+  { bg: 'bg-linear-to-br from-lime-50 to-lime-100', tint: 'bg-lime-500/10', text: 'text-lime-700', border: 'border-lime-500', glow: 'shadow-[0_0_20px_rgba(132,204,22,0.25)]', iconBg: 'bg-linear-to-br from-lime-500 to-lime-600', badgeBg: 'bg-lime-500/20' },
+  { bg: 'bg-linear-to-br from-pink-50 to-pink-100', tint: 'bg-pink-300/10', text: 'text-pink-600', border: 'border-pink-300', glow: 'shadow-[0_0_20px_rgba(249,168,212,0.25)]', iconBg: 'bg-linear-to-br from-pink-300 to-pink-400', badgeBg: 'bg-pink-300/20' },
+  { bg: 'bg-linear-to-br from-yellow-50 to-yellow-100', tint: 'bg-yellow-500/10', text: 'text-yellow-700', border: 'border-yellow-500', glow: 'shadow-[0_0_20px_rgba(234,179,8,0.25)]', iconBg: 'bg-linear-to-br from-yellow-500 to-yellow-600', badgeBg: 'bg-yellow-500/20' },
+  { bg: 'bg-linear-to-br from-stone-50 to-stone-100', tint: 'bg-stone-600/10', text: 'text-stone-700', border: 'border-stone-600', glow: 'shadow-[0_0_20px_rgba(87,83,78,0.25)]', iconBg: 'bg-linear-to-br from-stone-600 to-stone-700', badgeBg: 'bg-stone-600/20' },
+  { bg: 'bg-linear-to-br from-blue-50 to-blue-100', tint: 'bg-blue-600/10', text: 'text-blue-700', border: 'border-blue-600', glow: 'shadow-[0_0_20px_rgba(37,99,235,0.25)]', iconBg: 'bg-linear-to-br from-blue-600 to-blue-700', badgeBg: 'bg-blue-600/20' },
+  { bg: 'bg-linear-to-br from-rose-50 to-rose-100', tint: 'bg-rose-300/10', text: 'text-rose-600', border: 'border-rose-300', glow: 'shadow-[0_0_20px_rgba(253,164,175,0.25)]', iconBg: 'bg-linear-to-br from-rose-300 to-rose-400', badgeBg: 'bg-rose-300/20' },
+  { bg: 'bg-linear-to-br from-purple-50 to-purple-100', tint: 'bg-purple-500/10', text: 'text-purple-700', border: 'border-purple-500', glow: 'shadow-[0_0_20px_rgba(168,85,247,0.25)]', iconBg: 'bg-linear-to-br from-purple-500 to-purple-600', badgeBg: 'bg-purple-500/20' },
+  { bg: 'bg-linear-to-br from-orange-50 to-orange-100', tint: 'bg-orange-400/10', text: 'text-orange-600', border: 'border-orange-400', glow: 'shadow-[0_0_20px_rgba(251,146,60,0.25)]', iconBg: 'bg-linear-to-br from-orange-400 to-orange-500', badgeBg: 'bg-orange-400/20' },
+  { bg: 'bg-linear-to-br from-green-50 to-green-100', tint: 'bg-green-600/10', text: 'text-green-700', border: 'border-green-600', glow: 'shadow-[0_0_20px_rgba(22,163,74,0.25)]', iconBg: 'bg-linear-to-br from-green-600 to-green-700', badgeBg: 'bg-green-600/20' },
+  { bg: 'bg-linear-to-br from-cyan-50 to-cyan-100', tint: 'bg-cyan-400/10', text: 'text-cyan-600', border: 'border-cyan-400', glow: 'shadow-[0_0_20px_rgba(34,211,238,0.25)]', iconBg: 'bg-linear-to-br from-cyan-400 to-cyan-500', badgeBg: 'bg-cyan-400/20' },
+  // Default
   { bg: 'bg-linear-to-br from-slate-50 to-slate-100', tint: 'bg-slate-500/10', text: 'text-slate-700', border: 'border-slate-500', glow: 'shadow-[0_0_20px_rgba(100,116,139,0.25)]', iconBg: 'bg-linear-to-br from-slate-500 to-slate-600', badgeBg: 'bg-slate-500/20' },
 ];
 
@@ -175,6 +219,17 @@ const CARD_IMAGES: string[] = [
   /* wine/alcohol    */ '/images/cards/wine.jpg',
   /* water/filter    */ '/images/cards/water.jpg',
   /* card/credit     */ '/images/cards/credit-card.jpg',
+  // New categories
+  /* pet/dog/cat     */ '/images/cards/pet.jpg',
+  /* cosmetics       */ '/images/cards/cosmetics.jpg',
+  /* coupon/voucher  */ '/images/cards/coupon.jpg',
+  /* contract/lease  */ '/images/cards/contract.jpg',
+  /* domain/hosting  */ '/images/cards/domain.jpg',
+  /* baby/infant     */ '/images/cards/baby.jpg',
+  /* contact lens    */ '/images/cards/contacts.jpg',
+  /* sunscreen/spf   */ '/images/cards/sunscreen.jpg',
+  /* battery         */ '/images/cards/battery.jpg',
+  /* cleaning        */ '/images/cards/cleaning.jpg',
 ];
 
 const DEFAULT_CARD_IMAGE = '/images/cards/default.jpg';
@@ -209,4 +264,15 @@ export const ITEM_SUGGESTIONS = [
   'Travel',
   'Water filter',
   'Wine',
+  // New suggestions
+  'Pet food',
+  'Skincare',
+  'Coupon',
+  'Lease',
+  'Domain',
+  'Baby formula',
+  'Contact lens',
+  'Sunscreen',
+  'Battery',
+  'Cleaning supplies',
 ] as const;

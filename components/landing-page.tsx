@@ -27,6 +27,7 @@ function createDemoItem(
     name,
     expiry_date: expiryDate,
     user_id: null,
+    archived_at: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     status,

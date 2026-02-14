@@ -4,17 +4,25 @@ import { useState, useLayoutEffect, useRef, useCallback } from 'react';
 import { useTransition } from 'react';
 import { ExpiryItemWithStatus, ExpiryStatus } from '@/lib/types';
 import { ExpiryItemCard } from './expiry-item-card';
-import { deleteItemAction, deleteAllItemsAction } from '@/app/actions/item-actions';
+import {
+  deleteItemAction,
+  deleteAllItemsAction,
+  archiveItemAction,
+  archiveAllItemsAction,
+} from '@/app/actions/item-actions';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Clock, AlertTriangle, Trash2, type LucideIcon } from 'lucide-react';
 
+type ListMode = 'active' | 'archive';
+
 interface ExpiryItemListProps {
   items: ExpiryItemWithStatus[];
   onItemsChange?: () => void;
   onItemUpdated?: (updated: ExpiryItemWithStatus) => void;
+  mode?: ListMode;
 }
 
 const STATUS_FILTERS: {
@@ -29,21 +37,21 @@ const STATUS_FILTERS: {
     status: 'critical',
     label: 'Critical',
     icon: AlertTriangle,
-    activeClass: 'bg-red-100 text-red-800 border-red-300 ring-2 ring-red-200 hover:bg-red-200 hover:text-red-900 hover:border-red-300',
+    activeClass: 'bg-red-100 text-red-800 ring-2 ring-red-200 hover:bg-red-200 hover:text-red-900',
     badgeActiveClass: 'bg-red-200 text-red-800',
   },
   {
     status: 'approaching',
     label: 'Approaching',
     icon: Clock,
-    activeClass: 'bg-amber-100 text-amber-800 border-amber-300 ring-2 ring-amber-200 hover:bg-amber-200 hover:text-amber-900 hover:border-amber-300',
+    activeClass: 'bg-amber-100 text-amber-800 ring-2 ring-amber-200 hover:bg-amber-200 hover:text-amber-900',
     badgeActiveClass: 'bg-amber-200 text-amber-800',
   },
   {
     status: 'safe',
     label: 'Safe',
     icon: CheckCircle2,
-    activeClass: 'bg-green-100 text-green-800 border-green-300 ring-2 ring-green-200 hover:bg-green-200 hover:text-green-900 hover:border-green-300',
+    activeClass: 'bg-green-100 text-green-800 ring-2 ring-green-200 hover:bg-green-200 hover:text-green-900',
     badgeActiveClass: 'bg-green-200 text-green-800',
   },
   
@@ -89,7 +97,12 @@ function saveFilters(filters: Record<ExpiryStatus, boolean>) {
   } catch {}
 }
 
-export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryItemListProps) {
+export function ExpiryItemList({
+  items,
+  onItemsChange,
+  onItemUpdated,
+  mode = 'active',
+}: ExpiryItemListProps) {
   const [statusFilters, setStatusFilters] = useState<Record<ExpiryStatus, boolean>>({
     safe: true,
     approaching: true,
@@ -124,7 +137,11 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
   const handleDeleteAll = async () => {
     setIsDeletingAll(true);
     setShowDeleteAll(false);
-    await deleteAllItemsAction();
+    if (mode === 'active') {
+      await archiveAllItemsAction();
+    } else {
+      await deleteAllItemsAction();
+    }
     setIsDeletingAll(false);
     onItemsChange?.();
   };
@@ -134,14 +151,24 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
       const formData = new FormData();
       formData.append('id', id.toString());
       startTransition(async () => {
-        await deleteItemAction(formData);
+        if (mode === 'active') {
+          await archiveItemAction(formData);
+        } else {
+          await deleteItemAction(formData);
+        }
         onItemsChange?.();
       });
     },
-    [onItemsChange, startTransition]
+    [mode, onItemsChange, startTransition]
   );
 
   if (items.length === 0) {
+    const emptyTitle = mode === 'archive' ? 'No archived items' : 'No items yet';
+    const emptyDescription =
+      mode === 'archive'
+        ? 'Items you archive will appear here.'
+        : 'Add your first item above to start tracking! ✨';
+
     return (
       <div>
         <Card className="border-border bg-card/90 backdrop-blur-xl relative overflow-hidden">
@@ -166,12 +193,8 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
                 <path d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z" fill="currentColor" className="text-primary/60" transform="translate(45, 160)"/>
               </svg>
             </div>
-            <p className="text-gray-700 text-xl mb-2 font-medium">
-              No items yet
-            </p>
-            <p className="text-gray-500 text-sm">
-              Add your first item above to start tracking! ✨
-            </p>
+            <p className="text-gray-700 text-xl mb-2 font-medium">{emptyTitle}</p>
+            <p className="text-gray-500 text-sm">{emptyDescription}</p>
           </CardContent>
         </Card>
       </div>
@@ -185,24 +208,30 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         <p className="text-sm text-gray-600 font-medium">
-          {items.length} {items.length === 1 ? 'item' : 'items'} tracked · soonest to expire first
+          {items.length} {items.length === 1 ? 'item' : 'items'}
+          {mode === 'active' ? ' tracked · soonest to expire first' : ' archived'}
         </p>
-        <div className="h-1 w-1 rounded-full bg-primary" />
-        <p className="text-xs text-gray-500">{criticalCount} critical</p>
+        {mode === 'active' && (
+          <>
+            <div className="h-1 w-1 rounded-full bg-primary" />
+            <p className="text-xs text-gray-500">{criticalCount} critical</p>
+          </>
+        )}
       </div>
 
       {/* Status filters & actions */}
       <div className="flex flex-wrap items-center gap-2">
-        {STATUS_FILTERS.map(({ status, label, icon: Icon, activeClass, badgeActiveClass }) => (
+        {mode === 'active' &&
+          STATUS_FILTERS.map(({ status, label, icon: Icon, activeClass, badgeActiveClass }) => (
           <Button
             key={status}
             type="button"
             variant="outline"
             size="sm"
-            className={`border transition-all duration-200 ${
+            className={`border-0 transition-all duration-200 cursor-pointer ${
               statusFilters[status]
                 ? activeClass
-                : 'border-border bg-muted/50 text-muted-foreground opacity-60 hover:opacity-100 hover:bg-muted hover:text-foreground'
+                : 'bg-muted/50 text-muted-foreground opacity-60 hover:opacity-100 hover:bg-muted hover:text-foreground'
             }`}
             onClick={() => toggleFilter(status)}
           >
@@ -218,26 +247,34 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
             </Badge>
           </Button>
         ))}
+        {(mode === 'active' || items.length > 0) && (
         <Button
           type="button"
           variant="ghost"
           size="sm"
           disabled={isDeletingAll}
           onClick={() => setShowDeleteAll(true)}
-          className="ml-auto text-muted-foreground hover:text-destructive"
+          className="ml-auto text-muted-foreground hover:text-destructive cursor-pointer"
         >
           <Trash2 className="size-4 shrink-0" />
-          <span className="hidden sm:inline">Delete All</span>
+          <span className="hidden sm:inline">
+            {mode === 'active' ? 'Archive All' : 'Delete All Permanently'}
+          </span>
         </Button>
+        )}
       </div>
 
       <ConfirmDialog
         open={showDeleteAll}
         onClose={() => setShowDeleteAll(false)}
         onConfirm={handleDeleteAll}
-        title="Delete all items?"
-        description={`This will permanently remove all ${items.length} items. This action cannot be undone.`}
-        confirmLabel="Delete All"
+        title={mode === 'active' ? 'Archive all items?' : 'Permanently delete all archived items?'}
+        description={
+          mode === 'active'
+            ? `This will move all ${items.length} items to the archive. You can restore or permanently delete them from the Archive tab.`
+            : `This will permanently remove all ${items.length} archived items. This action cannot be undone.`
+        }
+        confirmLabel={mode === 'active' ? 'Archive All' : 'Delete All Permanently'}
         isPending={isDeletingAll}
       />
 

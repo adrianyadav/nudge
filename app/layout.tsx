@@ -15,10 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} - Gentle Reminders for Your Items`,
-  description: "Get timely nudges before your items expire. Track food, medicine, and more with instant visual feedback.",
+  title: {
+    default: `${BRAND_NAME} - Gentle Reminders for Your Items`,
+    template: `%s | ${BRAND_NAME}`,
+  },
+  description: "Get timely nudges before your items expire. Track passports, memberships, food, medicine, and more with instant visual feedback.",
+  keywords: ["expiry tracker", "reminders", "expiration dates", "membership tracker", "passport expiry"],
+  openGraph: {
+    title: `${BRAND_NAME} - Gentle Reminders for Your Items`,
+    description: "Get timely nudges before your items expire. Track passports, memberships, food, medicine, and more.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BRAND_NAME} - Gentle Reminders for Your Items`,
+    description: "Get timely nudges before your items expire. Track passports, memberships, food, medicine, and more.",
+  },
   icons: {
-    icon: "/nudge-icon.svg",
+    icon: "/favicon.ico",
   },
 };
 

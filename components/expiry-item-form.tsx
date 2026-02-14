@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useTransition, useRef, useEffect } from 'react';
+import { useState, useTransition, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import { createItemAction, updateItemAction } from '@/app/actions/item-actions';
 import { ExpiryItemWithStatus } from '@/lib/types';
 import { getItemIcon, getCardImage, FORM_INITIAL_BACKGROUND, ITEM_SUGGESTIONS } from '@/lib/item-icons';
+import type { LucideIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,200 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// Pre-compute icons for all known suggestions at module load (runs once)
+const SUGGESTION_ICON_CACHE = new Map<string, LucideIcon>(
+  ITEM_SUGGESTIONS.map((s) => [s, getItemIcon(s)])
+);
+
+function getCachedIcon(name: string): LucideIcon {
+  return SUGGESTION_ICON_CACHE.get(name) ?? getItemIcon(name);
+}
+
+// Lowercase cache for filtering
+const SUGGESTIONS_LOWER = ITEM_SUGGESTIONS.map((s) => ({
+  original: s,
+  lower: s.toLowerCase(),
+}));
+
+// ─── Suggestion item (memoized) ───────────────────────────────────────
+
+interface SuggestionItemProps {
+  suggestion: string;
+  index: number;
+  isHighlighted: boolean;
+  onSelect: (suggestion: string) => void;
+  onHover: (index: number) => void;
+}
+
+const SuggestionItem = memo(function SuggestionItem({
+  suggestion,
+  index,
+  isHighlighted,
+  onSelect,
+  onHover,
+}: SuggestionItemProps) {
+  const Icon = getCachedIcon(suggestion);
+  return (
+    <li
+      id={`suggestion-${index}`}
+      role="option"
+      aria-selected={isHighlighted}
+      className={`group cursor-pointer flex items-center gap-2 px-3 py-2 text-sm ${isHighlighted ? 'bg-accent' : 'hover:bg-accent'}`}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onSelect(suggestion);
+      }}
+      onMouseEnter={() => onHover(index)}
+    >
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon className="h-4 w-4 shrink-0" />
+      </span>
+      <span>{suggestion}</span>
+    </li>
+  );
+});
+
+// ─── Name autocomplete (isolated state — typing doesn't re-render parent) ──
+
+interface NameAutocompleteProps {
+  initialName: string;
+  hasSelectedBg: boolean;
+  onNameChange: (name: string) => void;
+  onSelect: (name: string) => void;
+}
+
+function NameAutocomplete({ initialName, hasSelectedBg, onNameChange, onSelect }: NameAutocompleteProps) {
+  const [name, setName] = useState(initialName);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const displaySuggestions = useMemo(() => {
+    const search = name.trim().toLowerCase();
+    const filtered = search
+      ? SUGGESTIONS_LOWER.filter((s) => s.lower.includes(search)).map((s) => s.original)
+      : ITEM_SUGGESTIONS.slice();
+    return filtered.slice(0, 8);
+  }, [name]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = useCallback((suggestion: string) => {
+    setName(suggestion);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+    onNameChange(suggestion);
+    onSelect(suggestion);
+  }, [onNameChange, onSelect]);
+
+  const handleHover = useCallback((index: number) => {
+    setHighlightedIndex(index);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || displaySuggestions.length === 0) {
+      if (e.key === 'Escape') setShowSuggestions(false);
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < displaySuggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev <= 0 ? displaySuggestions.length - 1 : prev - 1
+        );
+        break;
+      case 'Enter':
+        if (highlightedIndex >= 0) {
+          e.preventDefault();
+          handleSelect(displaySuggestions[highlightedIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const ItemIcon = getCachedIcon(name || ' ');
+
+  return (
+    <div className="space-y-2" ref={suggestionsRef}>
+      <Label className="text-base" htmlFor="name">What expires? ✨</Label>
+      <div className="relative">
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground">
+          <ItemIcon className="h-5 w-5" />
+        </div>
+        <Input
+          id="name"
+          name="name"
+          value={name}
+          onChange={(e) => {
+            const value = e.target.value;
+            setName(value);
+            setHighlightedIndex(-1);
+            onNameChange(value);
+          }}
+          onFocus={() => {
+            setShowSuggestions(true);
+            setHighlightedIndex(-1);
+          }}
+          onKeyDown={handleKeyDown}
+          autoComplete="off"
+          required
+          placeholder="Passport, milk, gym membership..."
+          className={`border-border focus-visible:ring-ring text-lg pl-10 ${hasSelectedBg ? 'bg-white/95' : ''}`}
+          aria-expanded={showSuggestions && displaySuggestions.length > 0}
+          aria-autocomplete="list"
+          aria-controls="name-suggestions"
+          aria-activedescendant={
+            highlightedIndex >= 0 ? `suggestion-${highlightedIndex}` : undefined
+          }
+        />
+        {showSuggestions && displaySuggestions.length > 0 && (
+          <ul
+            id="name-suggestions"
+            className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover py-1 shadow-lg"
+            role="listbox"
+          >
+            {displaySuggestions.map((suggestion, index) => (
+              <SuggestionItem
+                key={suggestion}
+                suggestion={suggestion}
+                index={index}
+                isHighlighted={index === highlightedIndex}
+                onSelect={handleSelect}
+                onHover={handleHover}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main form ────────────────────────────────────────────────────────
+
 interface ExpiryItemFormProps {
   editingItem?: ExpiryItemWithStatus | null;
   onCancelEdit?: () => void;
@@ -25,12 +220,9 @@ interface ExpiryItemFormProps {
 
 export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: ExpiryItemFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [name, setName] = useState(editingItem?.name || '');
   const [selectedName, setSelectedName] = useState(editingItem?.name || '');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [hoveredIndex, setHoveredIndex] = useState(-1);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [resetKey, setResetKey] = useState(0);
+  const nameRef = useRef(editingItem?.name || '');
 
   const editDate = editingItem ? new Date(editingItem.expiry_date) : null;
   const [year, setYear] = useState(editDate ? editDate.getFullYear().toString() : new Date().getFullYear().toString());
@@ -41,19 +233,16 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append('name', name);
+    formData.append('name', nameRef.current);
 
     // Build date: year is required, month/day are optional
     let expiryDate: string;
     if (month && day) {
-      // Full date provided
       expiryDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     } else if (month) {
-      // Year and month provided, default to last day of month
       const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
       expiryDate = `${year}-${month.padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
     } else {
-      // Only year provided, default to Dec 31
       expiryDate = `${year}-12-31`;
     }
 
@@ -66,8 +255,9 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
         onCancelEdit?.();
       } else {
         await createItemAction(formData);
-        setName('');
+        nameRef.current = '';
         setSelectedName('');
+        setResetKey((k) => k + 1);
         setYear(currentYear.toString());
         setMonth('');
         setDay('');
@@ -99,92 +289,30 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
 
   const days = Array.from({ length: getDaysInMonth() }, (_, i) => (i + 1).toString());
 
-  const search = name.trim().toLowerCase();
-  const filteredSuggestions = search
-    ? ITEM_SUGGESTIONS.filter((s) => s.toLowerCase().includes(search))
-    : [...ITEM_SUGGESTIONS];
-  const displaySuggestions = filteredSuggestions.slice(0, 8);
-
-  const previewName =
-    showSuggestions && displaySuggestions.length > 0
-      ? hoveredIndex >= 0
-        ? displaySuggestions[hoveredIndex]
-        : highlightedIndex >= 0
-          ? displaySuggestions[highlightedIndex]
-          : selectedName
-      : selectedName;
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-        setHighlightedIndex(-1);
-        setHoveredIndex(-1);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+  // Only called on keystroke — stored in ref, no parent re-render
+  const handleNameChange = useCallback((name: string) => {
+    nameRef.current = name;
+    if (!name.trim()) setSelectedName('');
   }, []);
 
-  useEffect(() => {
-    setHighlightedIndex(-1);
-    setHoveredIndex(-1);
-  }, [name, showSuggestions]);
+  // Only called on suggestion select — updates bg image
+  const handleNameSelect = useCallback((name: string) => {
+    setSelectedName(name);
+  }, []);
 
-  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions || displaySuggestions.length === 0) {
-      if (e.key === 'Escape') setShowSuggestions(false);
-      return;
-    }
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setHighlightedIndex((prev) =>
-          prev < displaySuggestions.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setHighlightedIndex((prev) =>
-          prev <= 0 ? displaySuggestions.length - 1 : prev - 1
-        );
-        break;
-      case 'Enter':
-        if (highlightedIndex >= 0) {
-          e.preventDefault();
-          const suggestion = displaySuggestions[highlightedIndex];
-          setName(suggestion);
-          setSelectedName(suggestion);
-          setShowSuggestions(false);
-          setHighlightedIndex(-1);
-          setHoveredIndex(-1);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setShowSuggestions(false);
-        setHighlightedIndex(-1);
-        setHoveredIndex(-1);
-        break;
-      default:
-        break;
-    }
-  };
-
-  const ItemIcon = getItemIcon(name || ' ');
+  const bgImage = selectedName ? getCardImage(selectedName) : FORM_INITIAL_BACKGROUND;
 
   return (
     <div>
       <Card className="border-border shadow-lg relative overflow-hidden wave-pattern py-6">
-        {/* Category background - preview on hover/keyboard, selected when chosen */}
+        {/* Category background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <Image
-            src={previewName ? getCardImage(previewName) : FORM_INITIAL_BACKGROUND}
+            src={bgImage}
             alt=""
             fill
-            quality={previewName ? 75 : 90}
-            className={`object-cover transition-opacity duration-300 ${previewName ? 'blur-md' : ''}`}
+            quality={selectedName ? 75 : 90}
+            className={`object-cover transition-opacity duration-300 ${selectedName ? 'blur-md' : ''}`}
             sizes="(max-width: 768px) 100vw, 1200px"
           />
           <div className="absolute inset-0 bg-linear-to-b from-white/90 via-white/80 to-white/65" />
@@ -198,79 +326,13 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
         </CardHeader>
         <CardContent className="relative z-10">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div
-              className="space-y-2"
-              ref={suggestionsRef}
-            >
-              <Label  className="text-base" htmlFor="name">What expires? ✨</Label>
-              <div className="relative">
-                <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground">
-                  <ItemIcon className="h-5 w-5" />
-                </div>
-                <Input
-                  id="name"
-                  name="name"
-                  value={name}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setName(value);
-                    if (!value.trim()) setSelectedName('');
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onKeyDown={handleNameKeyDown}
-                  autoComplete="off"
-                  required
-                  placeholder="Passport, milk, gym membership..."
-                  className={`border-border focus-visible:ring-ring text-lg pl-10 ${previewName ? 'bg-white/95' : ''}`}
-                  aria-expanded={showSuggestions && displaySuggestions.length > 0}
-                  aria-autocomplete="list"
-                  aria-controls="name-suggestions"
-                  aria-activedescendant={
-                    highlightedIndex >= 0 ? `suggestion-${highlightedIndex}` : undefined
-                  }
-                />
-                {showSuggestions && displaySuggestions.length > 0 && (
-                  <ul
-                    id="name-suggestions"
-                    className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover py-1 shadow-lg"
-                    role="listbox"
-                    onMouseLeave={() => setHoveredIndex(-1)}
-                  >
-                    {displaySuggestions.map((suggestion, index) => {
-                      const SuggestionIcon = getItemIcon(suggestion);
-                      const isHighlighted = index === highlightedIndex;
-                      return (
-                        <li
-                          key={suggestion}
-                          id={`suggestion-${index}`}
-                          role="option"
-                          aria-selected={isHighlighted}
-                          className={`group cursor-pointer flex items-center gap-2 px-3 py-2 text-sm ${isHighlighted ? 'bg-accent' : 'hover:bg-accent'}`}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setName(suggestion);
-                            setSelectedName(suggestion);
-                            setShowSuggestions(false);
-                            setHighlightedIndex(-1);
-                            setHoveredIndex(-1);
-                          }}
-                          onMouseEnter={() => {
-                            setHoveredIndex(index);
-                            setHighlightedIndex(index);
-                          }}
-                          onMouseLeave={() => setHoveredIndex(-1)}
-                        >
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                            <SuggestionIcon className="h-4 w-4 shrink-0" />
-                          </span>
-                          <span>{suggestion}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            </div>
+            <NameAutocomplete
+              key={resetKey}
+              initialName={editingItem?.name || ''}
+              hasSelectedBg={!!selectedName}
+              onNameChange={handleNameChange}
+              onSelect={handleNameSelect}
+            />
 
             <div className="space-y-4">
               <Label className="text-base">When does it expire?</Label>
@@ -290,7 +352,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                     min={currentYear}
                     max={currentYear + 50}
                     placeholder={currentYear.toString()}
-                    className={`border-border focus-visible:ring-ring ${previewName ? 'bg-white/95' : ''}`}
+                    className={`border-border focus-visible:ring-ring ${selectedName ? 'bg-white/95' : ''}`}
                   />
                 </div>
 
@@ -300,7 +362,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   </Label>
                   <div className="flex gap-2">
                     <Select value={month || undefined} onValueChange={setMonth}>
-                      <SelectTrigger className={`w-full border-border focus:ring-ring ${previewName ? 'bg-white/95' : ''}`}>
+                      <SelectTrigger className={`w-full border-border focus:ring-ring ${selectedName ? 'bg-white/95' : ''}`}>
                         <SelectValue placeholder="Any month" />
                       </SelectTrigger>
                       <SelectContent position="popper" className="max-h-60">
@@ -334,7 +396,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   </Label>
                   <div className="flex gap-2">
                     <Select value={day || undefined} onValueChange={setDay} disabled={!month}>
-                      <SelectTrigger className={`w-full border-border focus:ring-ring ${previewName ? 'bg-white/95' : ''}`}>
+                      <SelectTrigger className={`w-full border-border focus:ring-ring ${selectedName ? 'bg-white/95' : ''}`}>
                         <SelectValue placeholder="Any day" />
                       </SelectTrigger>
                       <SelectContent position="popper" className="max-h-60">

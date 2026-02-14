@@ -57,6 +57,14 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-6">
+          {status === 'authenticated' && (
+            <Link
+              href="/"
+              className="text-sm font-medium text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md px-2 py-1 transition-colors cursor-pointer"
+            >
+              Dashboard
+            </Link>
+          )}
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -118,6 +126,15 @@ export function Navbar() {
           aria-label="Mobile navigation"
         >
           <div className="container mx-auto px-4 py-4 max-w-7xl flex flex-col gap-4">
+            {status === 'authenticated' && (
+              <Link
+                href="/"
+                onClick={handleMobileLinkClick}
+                className="text-sm font-medium text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md px-2 py-2 transition-colors cursor-pointer"
+              >
+                Dashboard
+              </Link>
+            )}
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
