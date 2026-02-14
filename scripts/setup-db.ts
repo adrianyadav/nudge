@@ -43,6 +43,7 @@ async function setupDatabase() {
         name TEXT NOT NULL,
         expiry_date DATE NOT NULL,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        archived_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
