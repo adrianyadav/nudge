@@ -88,6 +88,8 @@ Run the test suite:
 npm run test:e2e
 ```
 
+These same checks run automatically on pull requests targeting `main`.
+
 Useful variants:
 
 ```bash
