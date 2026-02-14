@@ -1,16 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BRAND_NAME } from '@/lib/constants';
 
+const ERROR_MESSAGES: Record<string, string> = {
+  OAuthSignin: 'Error starting Google sign in. Please try again.',
+  OAuthCallback: 'Error during Google sign in. Please try again.',
+  OAuthCreateAccount: 'Could not create account. Please try again.',
+  OAuthAccountNotLinked: 'This email is already used with a different sign-in method. Try signing in with email and password.',
+  EmailCreateAccount: 'Could not create account. Please try again.',
+  Callback: 'Error during sign in. Please try again.',
+  OAuthSessionError: 'Session error. Please try again.',
+  Default: 'Something went wrong. Please try again.',
+};
+
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +30,13 @@ export default function SignInPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(ERROR_MESSAGES[errorParam] ?? ERROR_MESSAGES.Default);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +89,11 @@ export default function SignInPage() {
         </CardHeader>
 
         <CardContent>
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -163,12 +187,6 @@ export default function SignInPage() {
                   className="border-border focus-visible:ring-ring"
                   aria-label="Confirm your password"
                 />
-              </div>
-            )}
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
               </div>
             )}
 

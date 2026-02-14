@@ -97,9 +97,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
       }
-      // For OAuth sign-ins, also look up DB id if not already set
+      // For OAuth sign-ins, also look up or create user if id not already set
       if (account?.provider === 'google' && token.email && !token.id) {
-        const dbUser = await getUserByEmail(token.email);
+        let dbUser = await getUserByEmail(token.email);
+        if (!dbUser) {
+          dbUser = await createOAuthUser(token.email, token.name as string | undefined);
+        }
         if (dbUser) {
           token.id = dbUser.id.toString();
         }
