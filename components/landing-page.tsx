@@ -109,30 +109,23 @@ export function LandingPage({ onTryWithoutAccount }: LandingPageProps) {
             </span>
           </p>
 
-          <div className="flex gap-4 justify-center flex-wrap">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex gap-4 justify-center flex-wrap">
+              <Button
+                onClick={() => router.push('/auth/signin')}
+                size="lg"
+                className="cursor-pointer text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+              >
+                Get Started Free
+              </Button>
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6" asChild>
+                <Link href="#features">Learn More</Link>
+              </Button>
+            </div>
             <Button
-              onClick={() => router.push('/auth/signin')}
-              size="lg"
-              className="cursor-pointer text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
-            >
-              Get Started Free
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-lg px-8 py-6"
-              onClick={() => {
-                document
-                  .getElementById('features')
-                  ?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              Learn More
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              className="text-lg px-8 py-6"
+              variant="ghost"
+              size="sm"
+              className="cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
               onClick={onTryWithoutAccount}
             >
               Try Without Account
