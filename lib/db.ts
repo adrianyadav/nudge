@@ -1,6 +1,7 @@
 import { Pool, QueryResult, QueryResultRow } from 'pg';
 import { ExpiryItem, User } from './types';
 import { encrypt, decrypt } from './encryption';
+import { getPostgresPoolConfig } from './postgres-config';
 
 // Singleton connection pool
 let pool: Pool | null = null;
@@ -8,10 +9,7 @@ let pool: Pool | null = null;
 export function getPool(): Pool {
   if (!pool) {
     pool = new Pool({
-      connectionString: process.env.POSTGRES_URL,
-      ssl: {
-        rejectUnauthorized: false, // Neon requires SSL
-      },  
+      ...getPostgresPoolConfig(process.env.POSTGRES_URL),
       max: 20, // Connection pool size
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
@@ -22,7 +20,7 @@ export function getPool(): Pool {
 
 export async function query<T extends QueryResultRow>(
   text: string,
-  params?: readonly unknown[]
+  params?: unknown[]
 ): Promise<QueryResult<T>> {
   const pool = getPool();
   return pool.query<T>(text, params);
