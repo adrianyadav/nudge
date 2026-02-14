@@ -15,6 +15,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { NudgeIcon } from '@/components/nudge-icon';
+import { Navbar } from '@/components/navbar';
 import { getStatusColors } from '@/lib/expiry-utils';
 import type { ExpiryStatus } from '@/lib/types';
 
@@ -73,6 +74,8 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background grain mesh-gradient dot-pattern overflow-hidden relative">
+      <Navbar />
+
       {/* Decorative blobs */}
       <div className="blob blob-1 float-slow" />
       <div className="blob blob-2 float-medium" />
