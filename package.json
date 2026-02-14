@@ -11,6 +11,7 @@
     "migrate": "tsx scripts/migrate-add-users.ts",
     "migrate:encrypt": "tsx scripts/migrate-encrypt-names.ts",
     "migrate:archived-at": "tsx scripts/migrate-add-archived-at.ts",
+    "migrate:nullable-password": "tsx scripts/migrate-nullable-password.ts",
     "reset-db": "tsx scripts/reset-db.ts",
     "seed": "tsx scripts/seed.ts"
   },

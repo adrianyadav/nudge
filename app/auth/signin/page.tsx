@@ -11,11 +11,11 @@ import { BRAND_NAME } from '@/lib/constants';
 
 const ERROR_MESSAGES: Record<string, string> = {
   OAuthSignin: 'Error starting Google sign in. Please try again.',
-  OAuthCallback: 'Error during Google sign in. Please try again.',
+  OAuthCallback: 'Could not create your account. Please try again or sign up with email and password.',
   OAuthCreateAccount: 'Could not create account. Please try again.',
   OAuthAccountNotLinked: 'This email is already used with a different sign-in method. Try signing in with email and password.',
   EmailCreateAccount: 'Could not create account. Please try again.',
-  Callback: 'Error during sign in. Please try again.',
+  Callback: 'Could not create your account. Please try again or sign up with email and password.',
   OAuthSessionError: 'Session error. Please try again.',
   Default: 'Something went wrong. Please try again.',
 };

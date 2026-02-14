@@ -82,9 +82,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Look up or create the user in our DB for OAuth sign-ins
           let dbUser = await getUserByEmail(user.email);
           if (!dbUser) {
-            dbUser = await createOAuthUser(user.email, user.name || undefined);
+            try {
+              dbUser = await createOAuthUser(user.email, user.name || undefined);
+            } catch (createError: unknown) {
+              // Handle race: user may have been created between lookup and insert
+              const pgError = createError as { code?: string };
+              if (pgError?.code === '23505') {
+                dbUser = await getUserByEmail(user.email);
+              }
+              if (!dbUser) {
+                console.error('[Auth] Google signIn createOAuthUser error:', createError);
+                throw createError;
+              }
+            }
           }
-          // Attach our DB id so the jwt callback can use it
           user.id = dbUser.id.toString();
         } catch (error) {
           console.error('[Auth] Google signIn callback error:', error);
