@@ -1,5 +1,6 @@
 import { Pool, QueryResult, QueryResultRow } from 'pg';
 import { ExpiryItem, User } from './types';
+import { encrypt, decrypt } from './encryption';
 
 // Singleton connection pool
 let pool: Pool | null = null;
@@ -48,19 +49,26 @@ export async function createUser(
   return result.rows[0];
 }
 
+function decryptItem(item: ExpiryItem): ExpiryItem {
+  return { ...item, name: decrypt(item.name) };
+}
+
 // Database operations — always order by expiry date (soonest first)
 export async function getAllItems(userId?: number): Promise<ExpiryItem[]> {
+  let rows: ExpiryItem[];
   if (userId) {
     const result = await query<ExpiryItem>(
       'SELECT * FROM expiry_items WHERE user_id = $1 ORDER BY expiry_date ASC',
       [userId]
     );
-    return result.rows;
+    rows = result.rows;
+  } else {
+    const result = await query<ExpiryItem>(
+      'SELECT * FROM expiry_items ORDER BY expiry_date ASC'
+    );
+    rows = result.rows;
   }
-  const result = await query<ExpiryItem>(
-    'SELECT * FROM expiry_items ORDER BY expiry_date ASC'
-  );
-  return result.rows;
+  return rows.map(decryptItem);
 }
 
 export async function getItemById(id: number): Promise<ExpiryItem | null> {
@@ -68,7 +76,8 @@ export async function getItemById(id: number): Promise<ExpiryItem | null> {
     'SELECT * FROM expiry_items WHERE id = $1',
     [id]
   );
-  return result.rows[0] || null;
+  const row = result.rows[0];
+  return row ? decryptItem(row) : null;
 }
 
 export async function createItem(
@@ -76,11 +85,12 @@ export async function createItem(
   expiryDate: string,
   userId?: number
 ): Promise<ExpiryItem> {
+  const encryptedName = encrypt(name);
   const result = await query<ExpiryItem>(
     'INSERT INTO expiry_items (name, expiry_date, user_id) VALUES ($1, $2, $3) RETURNING *',
-    [name, expiryDate, userId ?? null]
+    [encryptedName, expiryDate, userId ?? null]
   );
-  return result.rows[0];
+  return decryptItem(result.rows[0]);
 }
 
 export async function updateItem(
@@ -88,11 +98,13 @@ export async function updateItem(
   name: string,
   expiryDate: string
 ): Promise<ExpiryItem | null> {
+  const encryptedName = encrypt(name);
   const result = await query<ExpiryItem>(
     'UPDATE expiry_items SET name = $1, expiry_date = $2 WHERE id = $3 RETURNING *',
-    [name, expiryDate, id]
+    [encryptedName, expiryDate, id]
   );
-  return result.rows[0] || null;
+  const row = result.rows[0];
+  return row ? decryptItem(row) : null;
 }
 
 export async function deleteItem(id: number): Promise<boolean> {

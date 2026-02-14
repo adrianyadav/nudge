@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { ExpiryItemForm } from '@/components/expiry-item-form';
 import { ExpiryItemList } from '@/components/expiry-item-list';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { getItemsAction } from '@/app/actions/item-actions';
 import { ExpiryItemWithStatus } from '@/lib/types';
 import { enrichItemWithStatus } from '@/lib/expiry-utils';
@@ -44,29 +44,18 @@ export function Dashboard() {
 
       <div className="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         {/* Add form - always in "add" mode; edit happens in modal */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <ExpiryItemForm
             onItemCreated={loadItems}
           />
-        </motion.div>
+        </div>
 
         {/* Items List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
+        <div>
           {isLoading ? (
             <div className="text-center py-12">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="inline-block w-12 h-12 border-4 border-border border-t-primary rounded-full"
+              <div
+                className="inline-block w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin"
               />
               <p className="text-gray-500 mt-4">Loading your items...</p>
             </div>
@@ -77,8 +66,10 @@ export function Dashboard() {
               onItemUpdated={handleItemUpdated}
             />
           )}
-        </motion.div>
+        </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

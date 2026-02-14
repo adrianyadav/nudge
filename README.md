@@ -1,8 +1,8 @@
-# Nudge
+# NudgeSoon
 
 **Gentle reminders for everything that expires.**
 
-Nudge is a simple app that helps you track anything with an expiry date—passports, memberships, food, medicine, and more. Add items with just a name and year, and get visual nudges when they're approaching or past their expiry.
+NudgeSoon is a simple app that helps you track anything with an expiry date—passports, memberships, food, medicine, and more. Add items with just a name and year, and get visual nudges when they're approaching or past their expiry.
 
 ## Features
 
@@ -22,7 +22,7 @@ Nudge is a simple app that helps you track anything with an expiry date—passpo
 
 - Node.js 18+
 - PostgreSQL database
-- A `.env.local` file with `POSTGRES_URL` and NextAuth variables
+- A `.env.local` file with `POSTGRES_URL`, NextAuth variables, and `ENCRYPTION_KEY` (required for production; generate with `openssl rand -base64 32`)
 
 ## Setup
 
@@ -32,17 +32,31 @@ Nudge is a simple app that helps you track anything with an expiry date—passpo
 npm install
 ```
 
-2. Set up the database:
+2. Copy `.env.example` to `.env.local` and fill in your values. Generate `ENCRYPTION_KEY` with:
+
+```bash
+openssl rand -base64 32
+```
+
+3. Set up the database:
 
 ```bash
 npm run setup-db
 ```
 
-3. (Optional) Seed sample data:
+4. (Optional) Seed sample data:
 
 ```bash
 npm run seed
 ```
+
+5. If you have existing data, run the encryption migration:
+
+```bash
+npm run migrate:encrypt
+```
+
+6. (Optional) Stripe donations: To enable donation buttons on the contribute page, create [Stripe Payment Links](https://dashboard.stripe.com/payment-links) for $3, $5, $10, $25, and a custom-amount link. Add the URLs to `.env.local` as `NEXT_PUBLIC_STRIPE_DONATION_LINK_3`, `NEXT_PUBLIC_STRIPE_DONATION_LINK_5`, etc. If no links are configured, the donation section is hidden.
 
 ## Getting Started
 

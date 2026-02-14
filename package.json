@@ -9,6 +9,7 @@
     "lint": "eslint",
     "setup-db": "tsx scripts/setup-db.ts",
     "migrate": "tsx scripts/migrate-add-users.ts",
+    "migrate:encrypt": "tsx scripts/migrate-encrypt-names.ts",
     "reset-db": "tsx scripts/reset-db.ts",
     "seed": "tsx scripts/seed.ts"
   },

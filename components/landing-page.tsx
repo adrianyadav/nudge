@@ -1,13 +1,14 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { Calendar, Sparkles, Bell, Shield } from 'lucide-react';
 import { NudgeIcon } from '@/components/nudge-icon';
+import { BRAND_NAME } from '@/lib/constants';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { ExpiryItemCard } from '@/components/expiry-item-card';
 import type { ExpiryItemWithStatus, ExpiryStatus } from '@/lib/types';
 
@@ -65,27 +66,6 @@ export function LandingPage() {
     },
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-      },
-    },
-  };
-
   return (
     <div className="min-h-screen bg-background grain mesh-gradient dot-pattern overflow-hidden relative">
       <Navbar />
@@ -95,41 +75,25 @@ export function LandingPage() {
       <div className="blob blob-2 float-medium" />
 
       {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="container mx-auto px-4 py-20 max-w-7xl relative z-10"
-      >
+      <div className="container mx-auto px-4 py-20 max-w-7xl relative z-10">
         {/* Subtle decorative circles in hero */}
         <div className="absolute top-32 left-[10%] w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute top-48 right-[15%] w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
         <div className="text-center mb-16">
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="inline-block mb-4"
-          >
+          <div className="inline-block mb-4">
             <Badge className="bg-primary text-primary-foreground border-0 px-4 py-2 text-sm font-medium">
               ✨ Never forget what expires
             </Badge>
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          <h1
             className="flex items-center justify-center gap-4 md:gap-6 mb-6 text-foreground tracking-tight"
           >
             <NudgeIcon className="w-16 h-16 md:w-24 md:h-24 text-primary" />
-            <span className="text-7xl md:text-9xl font-bold">Nudge</span>
-          </motion.h1>
+            <span className="text-7xl md:text-9xl font-bold">{BRAND_NAME}</span>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+          <p
             className="text-2xl md:text-3xl text-muted-foreground mb-8 max-w-3xl mx-auto font-light"
           >
             Gentle reminders for everything that expires.
@@ -137,14 +101,9 @@ export function LandingPage() {
             <span className="text-xl">
               Passports, memberships, food, medicine, and more.
             </span>
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex gap-4 justify-center flex-wrap"
-          >
+          <div className="flex gap-4 justify-center flex-wrap">
             <Button
               onClick={() => router.push('/auth/signin')}
               size="lg"
@@ -164,16 +123,11 @@ export function LandingPage() {
             >
               Learn More
             </Button>
-          </motion.div>
+          </div>
         </div>
 
         {/* Demo Preview */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="max-w-5xl mx-auto relative"
-        >
+        <div className="max-w-5xl mx-auto relative">
           {/* Decorative elements */}
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
@@ -181,38 +135,34 @@ export function LandingPage() {
           <Card className="p-8 bg-card/90 backdrop-blur-xl border-0 shadow-2xl relative z-10">
             <div className="grid md:grid-cols-3 gap-6">
               {DEMO_ITEMS.map((item) => (
-                <motion.div key={item.name} whileHover={{ scale: 1.02 }}>
+                <div key={item.name} className="transition-transform duration-200 hover:scale-[1.02]">
                   <ExpiryItemCard item={item} demo />
-                </motion.div>
+                </div>
               ))}
             </div>
           </Card>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* Features Section */}
-      <motion.div
+      <div
         id="features"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
         className="container mx-auto px-4 py-20 max-w-7xl"
       >
-        <motion.div variants={itemVariants} className="text-center mb-16">
+        <div className="text-center mb-16">
           <h2 className="text-5xl md:text-6xl font-bold mb-4 text-foreground">
-            Why Choose Nudge?
+            Why Choose {BRAND_NAME}?
           </h2>
           <p className="text-xl text-muted-foreground">
             The simplest way to track everything that matters
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <motion.div key={index} variants={itemVariants}>
+              <div key={index}>
                 <Card className="p-6 h-full hover:shadow-xl transition-all hover:scale-105 bg-card/80 backdrop-blur group">
                   <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Icon className="w-7 h-7 text-primary-foreground" />
@@ -224,31 +174,27 @@ export function LandingPage() {
                     {feature.description}
                   </p>
                 </Card>
-              </motion.div>
+              </div>
             );
           })}
         </div>
-      </motion.div>
+      </div>
 
       {/* Privacy & Security Section */}
-      <motion.div
+      <div
         id="privacy"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
         className="container mx-auto px-4 py-20 max-w-7xl"
       >
-        <motion.div variants={itemVariants} className="text-center mb-12">
+        <div className="text-center mb-12">
           <h2 className="text-5xl md:text-6xl font-bold mb-4 text-foreground">
             Privacy & Security
           </h2>
           <p className="text-xl text-muted-foreground">
             Your data stays yours. Here&apos;s how we protect it.
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div variants={itemVariants}>
+        <div>
           <Card className="p-8 max-w-3xl mx-auto bg-card/80 backdrop-blur hover:shadow-xl transition-all">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0">
@@ -312,17 +258,10 @@ export function LandingPage() {
               </li>
             </ul>
           </Card>
-        </motion.div>
-      </motion.div>
-
-      {/* Footer */}
-      <div className="container mx-auto px-4 py-8 max-w-7xl border-t">
-        <div className="text-center text-muted-foreground">
-          <p className="text-sm font-medium">
-            Made with care · Never miss what matters
-          </p>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

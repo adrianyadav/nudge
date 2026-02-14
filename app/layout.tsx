@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { BRAND_NAME } from "@/lib/constants";
 import { AuthProvider } from "@/components/session-provider";
 import "./globals.css";
 
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nudge - Gentle Reminders for Your Items",
+  title: `${BRAND_NAME} - Gentle Reminders for Your Items`,
   description: "Get timely nudges before your items expire. Track food, medicine, and more with instant visual feedback.",
   icons: {
     icon: "/nudge-icon.svg",

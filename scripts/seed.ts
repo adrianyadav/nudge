@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { encrypt } from '../lib/encryption';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
@@ -59,9 +60,10 @@ async function seed() {
       console.log('📦 Inserting sample expiry items...');
       for (let i = 0; i < SAMPLE_ITEMS.length; i++) {
         const { name, expiry_date } = SAMPLE_ITEMS[i];
+        const encryptedName = encrypt(name);
         await pool.query(
           `INSERT INTO expiry_items (name, expiry_date, user_id) VALUES ($1, $2, $3)`,
-          [name, expiry_date, userId]
+          [encryptedName, expiry_date, userId]
         );
         console.log(`   ${i + 1}. ${name} (${expiry_date})`);
       }

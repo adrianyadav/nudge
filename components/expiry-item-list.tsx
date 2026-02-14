@@ -2,7 +2,6 @@
 
 import { useState, useLayoutEffect, useRef, useCallback } from 'react';
 import { useTransition } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ExpiryItemWithStatus, ExpiryStatus } from '@/lib/types';
 import { ExpiryItemCard } from './expiry-item-card';
 import { deleteItemAction, deleteAllItemsAction } from '@/app/actions/item-actions';
@@ -144,11 +143,7 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
 
   if (items.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div>
         <Card className="border-border bg-card/90 backdrop-blur-xl relative overflow-hidden">
           <div className="absolute inset-0 opacity-30">
             <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
@@ -156,12 +151,7 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
           </div>
 
           <CardContent className="text-center py-16 relative z-10">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="inline-block mb-6"
-            >
+            <div className="inline-block mb-6">
               <svg width="160" height="160" viewBox="0 0 200 200" fill="none" className="mx-auto float-medium">
                 <rect x="40" y="50" width="120" height="130" rx="12" fill="#F0F9FF" stroke="currentColor" strokeWidth="2" className="text-primary"/>
                 <rect x="40" y="50" width="120" height="30" rx="12" fill="currentColor" className="text-primary"/>
@@ -175,26 +165,16 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
                 <path d="M150,-10 L152,-2 L160,0 L152,2 L150,10 L148,2 L140,0 L148,-2 Z" fill="currentColor" className="text-primary" transform="translate(0, 90)"/>
                 <path d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z" fill="currentColor" className="text-primary/60" transform="translate(45, 160)"/>
               </svg>
-            </motion.div>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-gray-700 text-xl mb-2 font-medium"
-            >
+            </div>
+            <p className="text-gray-700 text-xl mb-2 font-medium">
               No items yet
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-gray-500 text-sm"
-            >
+            </p>
+            <p className="text-gray-500 text-sm">
               Add your first item above to start tracking! ✨
-            </motion.p>
+            </p>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     );
   }
 
@@ -203,26 +183,16 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
 
   return (
     <div className="space-y-4">
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex items-center gap-2 flex-wrap"
-      >
+      <div className="flex items-center gap-2 flex-wrap">
         <p className="text-sm text-gray-600 font-medium">
           {items.length} {items.length === 1 ? 'item' : 'items'} tracked · soonest to expire first
         </p>
         <div className="h-1 w-1 rounded-full bg-primary" />
         <p className="text-xs text-gray-500">{criticalCount} critical</p>
-      </motion.div>
+      </div>
 
       {/* Status filters & actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="flex flex-wrap items-center gap-2"
-      >
+      <div className="flex flex-wrap items-center gap-2">
         {STATUS_FILTERS.map(({ status, label, icon: Icon, activeClass, badgeActiveClass }) => (
           <Button
             key={status}
@@ -259,7 +229,7 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
           <Trash2 className="size-4 shrink-0" />
           <span className="hidden sm:inline">Delete All</span>
         </Button>
-      </motion.div>
+      </div>
 
       <ConfirmDialog
         open={showDeleteAll}
@@ -271,27 +241,18 @@ export function ExpiryItemList({ items, onItemsChange, onItemUpdated }: ExpiryIt
         isPending={isDeletingAll}
       />
 
-      <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <AnimatePresence mode="popLayout">
-          {filteredItems.map((item) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.12 }}
-            >
-              <ExpiryItemCard
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {filteredItems.map((item) => (
+          <div key={item.id}>
+            <ExpiryItemCard
                 item={item}
                 onDelete={handleDelete}
                 onDateUpdated={onItemsChange}
                 onItemUpdated={onItemUpdated}
               />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </motion.div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

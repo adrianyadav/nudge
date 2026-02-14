@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useTransition, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { createItemAction, updateItemAction } from '@/app/actions/item-actions';
 import { ExpiryItemWithStatus } from '@/lib/types';
-import { getItemIcon, ITEM_SUGGESTIONS } from '@/lib/item-icons';
+import { getItemIcon, getCardImage, FORM_INITIAL_BACKGROUND, ITEM_SUGGESTIONS } from '@/lib/item-icons';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,10 @@ interface ExpiryItemFormProps {
 export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: ExpiryItemFormProps) {
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState(editingItem?.name || '');
+  const [selectedName, setSelectedName] = useState(editingItem?.name || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [hoveredIndex, setHoveredIndex] = useState(-1);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const editDate = editingItem ? new Date(editingItem.expiry_date) : null;
@@ -64,6 +67,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
       } else {
         await createItemAction(formData);
         setName('');
+        setSelectedName('');
         setYear(currentYear.toString());
         setMonth('');
         setDay('');
@@ -101,42 +105,104 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
     : [...ITEM_SUGGESTIONS];
   const displaySuggestions = filteredSuggestions.slice(0, 8);
 
+  const previewName =
+    showSuggestions && displaySuggestions.length > 0
+      ? hoveredIndex >= 0
+        ? displaySuggestions[hoveredIndex]
+        : highlightedIndex >= 0
+          ? displaySuggestions[highlightedIndex]
+          : selectedName
+      : selectedName;
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+        setHighlightedIndex(-1);
+        setHoveredIndex(-1);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setHighlightedIndex(-1);
+    setHoveredIndex(-1);
+  }, [name, showSuggestions]);
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || displaySuggestions.length === 0) {
+      if (e.key === 'Escape') setShowSuggestions(false);
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < displaySuggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev <= 0 ? displaySuggestions.length - 1 : prev - 1
+        );
+        break;
+      case 'Enter':
+        if (highlightedIndex >= 0) {
+          e.preventDefault();
+          const suggestion = displaySuggestions[highlightedIndex];
+          setName(suggestion);
+          setSelectedName(suggestion);
+          setShowSuggestions(false);
+          setHighlightedIndex(-1);
+          setHoveredIndex(-1);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+        setHoveredIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
+
   const ItemIcon = getItemIcon(name || ' ');
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div>
       <Card className="border-border shadow-lg relative overflow-hidden wave-pattern py-6">
+        {/* Category background - preview on hover/keyboard, selected when chosen */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <Image
+            src={previewName ? getCardImage(previewName) : FORM_INITIAL_BACKGROUND}
+            alt=""
+            fill
+            quality={previewName ? 75 : 90}
+            className={`object-cover transition-opacity duration-300 ${previewName ? 'blur-md' : ''}`}
+            sizes="(max-width: 768px) 100vw, 1200px"
+          />
+          <div className="absolute inset-0 bg-linear-to-b from-white/90 via-white/80 to-white/65" />
+        </div>
         {/* Subtle shimmer strip at top */}
-        <div className="absolute top-0 left-0 right-0 h-1 shimmer pointer-events-none rounded-t-lg" />
-        <CardHeader>
+        <div className="absolute top-0 left-0 right-0 h-1 shimmer pointer-events-none rounded-t-lg z-10" />
+        <CardHeader className="relative z-10">
           <CardTitle className="text-2xl bg-linear-to-r bg-primary bg-clip-text text-transparent">
             {editingItem ? 'Edit Item' : 'Add Something New'}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
+            <div
               className="space-y-2"
               ref={suggestionsRef}
             >
-              <Label htmlFor="name">What expires? ✨</Label>
+              <Label  className="text-base" htmlFor="name">What expires? ✨</Label>
               <div className="relative">
                 <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground">
                   <ItemIcon className="h-5 w-5" />
@@ -145,30 +211,54 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   id="name"
                   name="name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setName(value);
+                    if (!value.trim()) setSelectedName('');
+                  }}
                   onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={handleNameKeyDown}
                   autoComplete="off"
                   required
                   placeholder="Passport, milk, gym membership..."
-                  className="border-border focus-visible:ring-ring text-lg pl-10"
+                  className={`border-border focus-visible:ring-ring text-lg pl-10 ${previewName ? 'bg-white/95' : ''}`}
+                  aria-expanded={showSuggestions && displaySuggestions.length > 0}
+                  aria-autocomplete="list"
+                  aria-controls="name-suggestions"
+                  aria-activedescendant={
+                    highlightedIndex >= 0 ? `suggestion-${highlightedIndex}` : undefined
+                  }
                 />
                 {showSuggestions && displaySuggestions.length > 0 && (
                   <ul
+                    id="name-suggestions"
                     className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover py-1 shadow-lg"
                     role="listbox"
+                    onMouseLeave={() => setHoveredIndex(-1)}
                   >
-                    {displaySuggestions.map((suggestion) => {
+                    {displaySuggestions.map((suggestion, index) => {
                       const SuggestionIcon = getItemIcon(suggestion);
+                      const isHighlighted = index === highlightedIndex;
                       return (
                         <li
                           key={suggestion}
+                          id={`suggestion-${index}`}
                           role="option"
-                          className="group cursor-pointer flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent"
+                          aria-selected={isHighlighted}
+                          className={`group cursor-pointer flex items-center gap-2 px-3 py-2 text-sm ${isHighlighted ? 'bg-accent' : 'hover:bg-accent'}`}
                           onMouseDown={(e) => {
                             e.preventDefault();
                             setName(suggestion);
+                            setSelectedName(suggestion);
                             setShowSuggestions(false);
+                            setHighlightedIndex(-1);
+                            setHoveredIndex(-1);
                           }}
+                          onMouseEnter={() => {
+                            setHoveredIndex(index);
+                            setHighlightedIndex(index);
+                          }}
+                          onMouseLeave={() => setHoveredIndex(-1)}
                         >
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <SuggestionIcon className="h-4 w-4 shrink-0" />
@@ -180,14 +270,9 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   </ul>
                 )}
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className="space-y-4"
-            >
+            <div className="space-y-4">
               <Label className="text-base">When does it expire?</Label>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -205,7 +290,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                     min={currentYear}
                     max={currentYear + 50}
                     placeholder={currentYear.toString()}
-                    className="border-border focus-visible:ring-ring"
+                    className={`border-border focus-visible:ring-ring ${previewName ? 'bg-white/95' : ''}`}
                   />
                 </div>
 
@@ -215,7 +300,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   </Label>
                   <div className="flex gap-2">
                     <Select value={month || undefined} onValueChange={setMonth}>
-                      <SelectTrigger className="w-full border-border focus:ring-ring">
+                      <SelectTrigger className={`w-full border-border focus:ring-ring ${previewName ? 'bg-white/95' : ''}`}>
                         <SelectValue placeholder="Any month" />
                       </SelectTrigger>
                       <SelectContent position="popper" className="max-h-60">
@@ -249,7 +334,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   </Label>
                   <div className="flex gap-2">
                     <Select value={day || undefined} onValueChange={setDay} disabled={!month}>
-                      <SelectTrigger className="w-full border-border focus:ring-ring">
+                      <SelectTrigger className={`w-full border-border focus:ring-ring ${previewName ? 'bg-white/95' : ''}`}>
                         <SelectValue placeholder="Any day" />
                       </SelectTrigger>
                       <SelectContent position="popper" className="max-h-60">
@@ -278,14 +363,9 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
               <p className="text-xs text-gray-500 italic">
                 💡 Tip: Only year is required. Leave month/day blank if you don't know the exact date.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
-              className="flex gap-2"
-            >
+            <div className="flex gap-2">
               <Button
                 type="submit"
                 disabled={isPending}
@@ -293,10 +373,8 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
               >
                 {isPending ? (
                   <span className="flex items-center gap-2">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                    <div
+                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
                     />
                     Saving...
                   </span>
@@ -317,10 +395,10 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   Cancel
                 </Button>
               )}
-            </motion.div>
+            </div>
           </form>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { BRAND_NAME } from '@/lib/constants';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function SignInPage() {
       <Card className="w-full max-w-md border-border shadow-xl relative z-10 p-8">
         <CardHeader className="text-center">
           <CardTitle className="text-4xl font-bold bg-linear-to-r bg-primary bg-clip-text text-transparent mb-2">
-            Nudge
+            {BRAND_NAME}
           </CardTitle>
           <CardDescription className="text-base">
             {isSignUp ? 'Create your account' : 'Welcome back'}

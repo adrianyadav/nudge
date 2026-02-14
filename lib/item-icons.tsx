@@ -179,6 +179,9 @@ const CARD_IMAGES: string[] = [
 
 const DEFAULT_CARD_IMAGE = '/images/cards/default.jpg';
 
+/** Sky background for form initial state (no selection). Add public/images/cards/sky.jpg */
+export const FORM_INITIAL_BACKGROUND = '/images/cards/sky.jpg';
+
 /**
  * Returns the Unsplash background image URL for an item name.
  * Matches the same keyword logic as getItemIcon/getItemAccent.

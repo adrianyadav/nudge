@@ -5,7 +5,6 @@ import { getStatusColors } from '@/lib/expiry-utils';
 import { getItemIcon, getItemAccent, getAccentCardColors, getCardImage } from '@/lib/item-icons';
 import Image from 'next/image';
 import { useState, useCallback, useEffect, memo } from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,7 +64,6 @@ const ExpiryItemCardComponent = ({
 }: ExpiryItemCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [editingField, setEditingField] = useState<'year' | 'month' | 'day' | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const colors =
@@ -142,7 +140,7 @@ const ExpiryItemCardComponent = ({
     <Card
       textured
       className={`
-        relative transition-all duration-300
+        group relative transition-all duration-300
         ${colors.bg} ${colors.glow}
         ${isDeleting ? 'opacity-50' : ''}
         overflow-hidden
@@ -167,7 +165,7 @@ const ExpiryItemCardComponent = ({
       <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/30 rounded-bl-lg pointer-events-none" />
 
       <div
-        className={`absolute inset-0 bg-white/30 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+        className="absolute inset-0 bg-white/30 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
       />
 
       {!demo && (
@@ -179,10 +177,8 @@ const ExpiryItemCardComponent = ({
           aria-label="Delete item"
         >
           {isDeleting ? (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              className="size-3 border-2 border-current border-t-transparent rounded-full"
+            <div
+              className="size-3 border-2 border-current border-t-transparent rounded-full animate-spin"
             />
           ) : (
             <X className="size-3" />
@@ -329,15 +325,8 @@ const ExpiryItemCardComponent = ({
             </span>
             )}
           </div>
-          <motion.p
-            className="text-sm opacity-75 font-medium"
-            animate={{
-              scale: item.status === 'critical' ? [1, 1.05, 1] : 1,
-            }}
-            transition={{
-              duration: 2,
-              repeat: item.status === 'critical' ? Infinity : 0,
-            }}
+          <p
+            className={`text-sm opacity-75 font-medium ${item.status === 'critical' ? 'animate-pulse' : ''}`}
           >
             {(() => {
               const daysLeft = hasUnsavedChanges
@@ -354,7 +343,7 @@ const ExpiryItemCardComponent = ({
               if (daysLeft < 0) return `Expired ${Math.abs(daysLeft)} days ago`;
               return `${daysLeft} days left`;
             })()}
-          </motion.p>
+          </p>
         </div>
 
         {!demo && (
@@ -369,10 +358,8 @@ const ExpiryItemCardComponent = ({
             >
               {isUpdating ? (
                 <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-3 h-3 border-2 border-white border-t-transparent rounded-full"
+                  <div
+                    className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"
                   />
                   Updating...
                 </>
@@ -392,17 +379,11 @@ const ExpiryItemCardComponent = ({
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.98 }}
-        transition={{ duration: 0.15 }}
-        whileHover={{ scale: 1.02, y: -4 }}
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
+      <div
+        className="transition-transform duration-200 hover:scale-[1.02] hover:-translate-y-1"
       >
         {card}
-      </motion.div>
+      </div>
       <ConfirmDialog
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}

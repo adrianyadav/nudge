@@ -38,7 +38,7 @@ async function resetDatabase() {
     await pool.query(`
       CREATE TABLE expiry_items (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
+        name TEXT NOT NULL,
         expiry_date DATE NOT NULL,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
