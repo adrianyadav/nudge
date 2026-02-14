@@ -4,7 +4,7 @@ import { ExpiryItemWithStatus } from '@/lib/types';
 import { getStatusColors } from '@/lib/expiry-utils';
 import { getItemIcon, getItemAccent, getCardImage } from '@/lib/item-icons';
 import Image from 'next/image';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { updateItemAction } from '@/app/actions/item-actions';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Trash2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { Trash2, CheckCircle2, Clock, AlertTriangle, Save } from 'lucide-react';
 import type { ExpiryStatus } from '@/lib/types';
 
 const STATUS_ICONS: Record<ExpiryStatus, typeof CheckCircle2> = {
@@ -71,9 +71,23 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
   const month = expDate.toLocaleString('en-US', { month: 'short' });
   const day = expDate.getDate();
 
+  const [localYear, setLocalYear] = useState(year);
+  const [localMonth, setLocalMonth] = useState(monthNum);
+  const [localDay, setLocalDay] = useState(day);
+
+  useEffect(() => {
+    setLocalYear(year);
+    setLocalMonth(monthNum);
+    setLocalDay(day);
+  }, [item.expiry_date, year, monthNum, day]);
+
   const currentYear = new Date().getFullYear();
-  const daysInMonth = getDaysInMonth(year, monthNum);
+  const daysInMonth = getDaysInMonth(localYear, localMonth);
   const days = Array.from({ length: daysInMonth }, (_, i) => (i + 1).toString());
+  const localMonthShort = new Date(2000, localMonth - 1, 1).toLocaleString('en-US', { month: 'short' });
+
+  const hasUnsavedChanges =
+    localYear !== year || localMonth !== monthNum || localDay !== day;
 
   const saveDate = useCallback(
     async (newYear: number, newMonth: number, newDay: number) => {
@@ -93,6 +107,12 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
     [item.id, item.name, onDateUpdated]
   );
 
+  const handleUpdateDate = useCallback(() => {
+    const lastDay = getDaysInMonth(localYear, localMonth);
+    const clampedDay = Math.min(localDay, lastDay);
+    saveDate(localYear, localMonth, clampedDay);
+  }, [localYear, localMonth, localDay, saveDate]);
+
   const handleDelete = async () => {
     setIsDeleting(true);
     setShowDeleteConfirm(false);
@@ -109,38 +129,36 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
         overflow-hidden
       `}
     >
-      {/* Blurred category background image */}
+      {/* Category background image */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <Image
           src={cardImage}
           alt=""
           fill
-          className="object-cover blur-sm scale-105 opacity-30"
+          className="object-cover scale-105 opacity-55"
           sizes="(max-width: 768px) 100vw, 400px"
         />
-        <div className="absolute inset-0 bg-linear-to-br from-black/20 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-b from-white/60 via-white/35 to-white/10" />
       </div>
       {/* Status tint overlay */}
       <div className={`absolute inset-0 ${colors.tint} pointer-events-none`} />
+      {/* White gradient behind text for readability */}
+      <div className="absolute inset-4 rounded-xl bg-gradient-to-b from-white/80 via-white/60 to-white/40 shadow-sm pointer-events-none z-[5]" />
       <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white/30 rounded-tr-lg pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/30 rounded-bl-lg pointer-events-none" />
 
-      <motion.div
-        className="absolute inset-0 bg-white/30 opacity-0"
-        animate={{ opacity: isHovered ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
+      <div
+        className={`absolute inset-0 bg-white/30 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
       />
 
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3 relative z-10">
         <div className="flex items-start gap-3">
-          <motion.div
-            animate={{ rotate: isHovered ? [0, -8, 8, 0] : 0 }}
-            transition={{ duration: 0.5 }}
+          <div
             className={`flex shrink-0 w-12 h-12 rounded-xl ${accent.iconBg} flex items-center justify-center shadow-sm`}
           >
             <ItemIcon className="w-6 h-6 text-white" />
-          </motion.div>
-          <h3 className={`text-xl font-semibold ${colors.text}`}>{item.name}</h3>
+          </div>
+          <h3 className={`text-xl font-semibold ${colors.text} [text-shadow:0_1px_2px_rgba(255,255,255,0.9),0_0_4px_rgba(255,255,255,0.5)]`}>{item.name}</h3>
         </div>
         <Badge
           variant="outline"
@@ -148,7 +166,7 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
           className={`
             inline-flex items-center justify-center rounded-full p-1.5
             ${colors.badgeBg} ${colors.text} border ${colors.border}
-            shadow-sm
+            shadow-sm [text-shadow:0_1px_2px_rgba(255,255,255,0.9)]
           `}
         >
           <StatusIcon className="size-4 shrink-0" />
@@ -156,40 +174,34 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
       </CardHeader>
 
       <CardContent className="space-y-4 relative z-10">
-        <motion.div
-          className={`space-y-2 ${colors.text}`}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+        <div
+          className={`space-y-2 ${colors.text} [text-shadow:0_1px_2px_rgba(255,255,255,0.9),0_0_4px_rgba(255,255,255,0.5)]`}
         >
           <div className="flex items-baseline gap-2">
             {editingField === 'year' ? (
               <Input
                 type="number"
-                defaultValue={year}
+                value={localYear}
                 min={currentYear}
                 max={currentYear + 50}
                 className="h-10 w-24 text-2xl font-bold border-border"
                 autoFocus
                 disabled={isUpdating}
-                onBlur={(e) => {
+                onChange={(e) => {
                   const val = parseInt(e.target.value, 10);
                   if (!isNaN(val) && val >= currentYear && val <= currentYear + 50) {
-                    saveDate(val, monthNum, day);
-                  } else {
-                    setEditingField(null);
+                    setLocalYear(val);
+                    const maxDay = getDaysInMonth(val, localMonth);
+                    if (localDay > maxDay) setLocalDay(maxDay);
                   }
                 }}
+                onBlur={() => setEditingField(null)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const val = parseInt((e.target as HTMLInputElement).value, 10);
-                    if (!isNaN(val) && val >= currentYear && val <= currentYear + 50) {
-                      saveDate(val, monthNum, day);
-                    } else {
-                      setEditingField(null);
-                    }
+                  if (e.key === 'Enter') setEditingField(null);
+                  if (e.key === 'Escape') {
+                    setLocalYear(year);
+                    setEditingField(null);
                   }
-                  if (e.key === 'Escape') setEditingField(null);
                 }}
               />
             ) : (
@@ -198,14 +210,19 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
                 onClick={() => setEditingField('year')}
                 className="text-4xl font-bold cursor-pointer hover:underline hover:bg-foreground/10 rounded px-1 -mx-1 transition-colors"
               >
-                {year}
+                {localYear}
               </button>
             )}
             <span className="text-lg font-medium opacity-75">
               {editingField === 'month' ? (
                 <Select
-                  value={monthNum.toString()}
-                  onValueChange={(val) => saveDate(year, parseInt(val, 10), day)}
+                  value={localMonth.toString()}
+                  onValueChange={(val) => {
+                    const newMonth = parseInt(val, 10);
+                    setLocalMonth(newMonth);
+                    const maxDay = getDaysInMonth(localYear, newMonth);
+                    if (localDay > maxDay) setLocalDay(maxDay);
+                  }}
                   open={editingField === 'month'}
                   onOpenChange={(open) => !open && setEditingField(null)}
                 >
@@ -226,13 +243,13 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
                   onClick={() => setEditingField('month')}
                   className="cursor-pointer hover:underline hover:bg-foreground/10 rounded px-1 -mx-1 transition-colors"
                 >
-                  {month}
+                  {localMonthShort}
                 </button>
               )}{' '}
               {editingField === 'day' ? (
                 <Select
-                  value={day.toString()}
-                  onValueChange={(val) => saveDate(year, monthNum, parseInt(val, 10))}
+                  value={localDay.toString()}
+                  onValueChange={(val) => setLocalDay(parseInt(val, 10))}
                   open={editingField === 'day'}
                   onOpenChange={(open) => !open && setEditingField(null)}
                 >
@@ -253,7 +270,7 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
                   onClick={() => setEditingField('day')}
                   className="cursor-pointer hover:underline hover:bg-foreground/10 rounded px-1 -mx-1 transition-colors"
                 >
-                  {day}
+                  {localDay}
                 </button>
               )}
             </span>
@@ -268,20 +285,50 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
               repeat: item.status === 'critical' ? Infinity : 0,
             }}
           >
-            {item.daysUntilExpiry === 0
-              ? '⚠️ Expires today!'
-              : item.daysUntilExpiry < 0
-                ? `Expired ${Math.abs(item.daysUntilExpiry)} days ago`
-                : `${item.daysUntilExpiry} days left`}
+            {(() => {
+              const daysLeft = hasUnsavedChanges
+                ? (() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const localExp = new Date(localYear, localMonth - 1, localDay);
+                    localExp.setHours(0, 0, 0, 0);
+                    const diff = Math.ceil((localExp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    return diff;
+                  })()
+                : item.daysUntilExpiry;
+              if (daysLeft === 0) return '⚠️ Expires today!';
+              if (daysLeft < 0) return `Expired ${Math.abs(daysLeft)} days ago`;
+              return `${daysLeft} days left`;
+            })()}
           </motion.p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          className="flex gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
+        <div className="flex gap-2 flex-wrap">
+          {hasUnsavedChanges && (
+            <Button
+              onClick={handleUpdateDate}
+              variant="default"
+              size="sm"
+              disabled={isUpdating}
+              className="gap-2 bg-primary hover:bg-primary/90"
+            >
+              {isUpdating ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-3 h-3 border-2 border-white border-t-transparent rounded-full"
+                  />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="w-3 h-3" />
+                  Update
+                </>
+              )}
+            </Button>
+          )}
           <Button
             onClick={() => setShowDeleteConfirm(true)}
             variant="destructive"
@@ -304,7 +351,7 @@ export function ExpiryItemCard({ item, onDelete, onDateUpdated }: ExpiryItemCard
               </>
             )}
           </Button>
-        </motion.div>
+        </div>
       </CardContent>
     </Card>
   );
