@@ -27,7 +27,7 @@ export default function PrivacyPage() {
         </div>
 
         <Card className="p-8 max-w-3xl mx-auto bg-card/80 backdrop-blur hover:shadow-xl transition-all">
-          <div className="flex items-start gap-4 mb-8">
+          <div className="flex items-start gap-4 mb-6">
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0">
               <Shield className="w-6 h-6 text-primary-foreground" />
             </div>
@@ -43,12 +43,12 @@ export default function PrivacyPage() {
 
           <div className="space-y-6">
             {PRIVACY_ITEMS.map(({ icon: Icon, title, description }) => (
-              <div key={title} className="flex gap-4">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon className="w-4 h-4 text-primary" />
+              <div key={title} className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0">
+                  <Icon className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
                 </div>
               </div>
