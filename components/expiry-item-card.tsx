@@ -50,12 +50,19 @@ function getDaysInMonth(year: number, month: number): number {
 
 interface ExpiryItemCardProps {
   item: ExpiryItemWithStatus;
-  onDelete: (id: number) => void;
+  onDelete?: (id: number) => void;
   onDateUpdated?: () => void;
   onItemUpdated?: (updated: ExpiryItemWithStatus) => void;
+  demo?: boolean;
 }
 
-const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated }: ExpiryItemCardProps) => {
+const ExpiryItemCardComponent = ({
+  item,
+  onDelete,
+  onDateUpdated,
+  onItemUpdated,
+  demo = false,
+}: ExpiryItemCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -125,6 +132,7 @@ const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated 
   }, [localYear, localMonth, localDay, saveDate]);
 
   const handleDelete = async () => {
+    if (!onDelete) return;
     setIsDeleting(true);
     setShowDeleteConfirm(false);
     await onDelete(item.id);
@@ -162,23 +170,25 @@ const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated 
         className={`absolute inset-0 bg-white/30 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
       />
 
-      <Button
-        variant="ghost"
-        onClick={() => setShowDeleteConfirm(true)}
-        disabled={isDeleting}
-        className="absolute top-0 right-0 h-6 w-6 p-0 z-10 text-muted-foreground hover:text-white hover:bg-destructive rounded-tr-xl min-w-0 [&_svg]:size-3"
-        aria-label="Delete item"
-      >
-        {isDeleting ? (
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="size-3 border-2 border-current border-t-transparent rounded-full"
-          />
-        ) : (
-          <X className="size-3" />
-        )}
-      </Button>
+      {!demo && (
+        <Button
+          variant="ghost"
+          onClick={() => setShowDeleteConfirm(true)}
+          disabled={isDeleting}
+          className="absolute top-0 right-0 h-6 w-6 p-0 z-10 text-muted-foreground hover:text-white hover:bg-destructive rounded-tr-xl min-w-0 [&_svg]:size-3"
+          aria-label="Delete item"
+        >
+          {isDeleting ? (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              className="size-3 border-2 border-current border-t-transparent rounded-full"
+            />
+          ) : (
+            <X className="size-3" />
+          )}
+        </Button>
+      )}
 
       <CardHeader className="flex flex-row items-start justify-between gap-4 px-7 py-6 pb-4 relative z-10">
         <div className="flex items-start gap-4 min-w-0">
@@ -213,7 +223,14 @@ const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated 
           className={`space-y-3 ${colors.text} [text-shadow:0_1px_2px_rgba(255,255,255,0.9),0_0_4px_rgba(255,255,255,0.5)]`}
         >
           <div className="flex items-baseline gap-2">
-            {editingField === 'year' ? (
+            {demo ? (
+              <>
+                <span className="text-4xl font-bold">{localYear}</span>
+                <span className="text-lg font-medium opacity-75">
+                  {localMonthShort} {localDay}
+                </span>
+              </>
+            ) : editingField === 'year' ? (
               <Input
                 type="number"
                 value={localYear}
@@ -248,6 +265,7 @@ const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated 
                 {localYear}
               </button>
             )}
+            {!demo && (
             <span className="text-lg font-medium opacity-75">
               {editingField === 'month' ? (
                 <Select
@@ -309,6 +327,7 @@ const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated 
                 </button>
               )}
             </span>
+            )}
           </div>
           <motion.p
             className="text-sm opacity-75 font-medium"
@@ -338,6 +357,7 @@ const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated 
           </motion.p>
         </div>
 
+        {!demo && (
         <div className="flex gap-2 flex-wrap">
           {hasUnsavedChanges && (
             <Button
@@ -365,6 +385,7 @@ const ExpiryItemCardComponent = ({ item, onDelete, onDateUpdated, onItemUpdated 
             </Button>
           )}
         </div>
+        )}
       </CardContent>
     </Card>
   );

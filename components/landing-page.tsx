@@ -2,28 +2,42 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
-import {
-  Calendar,
-  Sparkles,
-  Bell,
-  Shield,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-} from 'lucide-react';
+import { Calendar, Sparkles, Bell, Shield } from 'lucide-react';
 import { NudgeIcon } from '@/components/nudge-icon';
 import { Navbar } from '@/components/navbar';
-import { getStatusColors } from '@/lib/expiry-utils';
-import type { ExpiryStatus } from '@/lib/types';
+import { ExpiryItemCard } from '@/components/expiry-item-card';
+import type { ExpiryItemWithStatus, ExpiryStatus } from '@/lib/types';
 
-const STATUS_ICONS: Record<ExpiryStatus, typeof CheckCircle2> = {
-  safe: CheckCircle2,
-  approaching: Clock,
-  critical: AlertTriangle,
-};
+function createDemoItem(
+  name: string,
+  status: ExpiryStatus,
+  daysUntilExpiry: number
+): ExpiryItemWithStatus {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(today);
+  expiry.setDate(expiry.getDate() + daysUntilExpiry);
+  const expiryDate = expiry.toISOString().split('T')[0];
+  return {
+    id: 0,
+    name,
+    expiry_date: expiryDate,
+    user_id: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    status,
+    daysUntilExpiry,
+  };
+}
+
+const DEMO_ITEMS: ExpiryItemWithStatus[] = [
+  createDemoItem('Passport', 'safe', 850),
+  createDemoItem('Gym membership', 'approaching', 5),
+  createDemoItem('Milk', 'critical', 1),
+];
 
 export function LandingPage() {
   const router = useRouter();
@@ -166,74 +180,11 @@ export function LandingPage() {
 
           <Card className="p-8 bg-card/90 backdrop-blur-xl border-0 shadow-2xl relative z-10">
             <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  name: 'Passport',
-                  status: 'safe' as ExpiryStatus,
-                  year: '2028',
-                  daysLeft: '850 days left',
-                },
-                {
-                  name: 'Gym Pass',
-                  status: 'approaching' as ExpiryStatus,
-                  year: '2026',
-                  daysLeft: '5 days left',
-                },
-                {
-                  name: 'Milk',
-                  status: 'critical' as ExpiryStatus,
-                  year: '2026',
-                  daysLeft: '1 day left',
-                },
-              ].map((item) => {
-                const colors = getStatusColors(item.status);
-                const StatusIcon = STATUS_ICONS[item.status];
-                return (
-                  <motion.div key={item.name} whileHover={{ scale: 1.05 }}>
-                    <Card
-                      textured
-                      className={`
-                        relative transition-all duration-300 overflow-hidden
-                        ${colors.bg} ${colors.glow}
-                      `}
-                    >
-                      <div
-                        className={`absolute inset-0 ${colors.tint} pointer-events-none`}
-                      />
-                      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3 relative z-10">
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={`shrink-0 w-12 h-12 rounded-xl ${colors.iconBg} flex items-center justify-center shadow-sm`}
-                          >
-                            <StatusIcon className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className={`text-xl font-semibold ${colors.text}`}>
-                            {item.name}
-                          </h3>
-                        </div>
-                        <Badge
-                          title={item.status}
-                          className={`
-                            inline-flex items-center justify-center rounded-full p-1.5
-                            ${colors.badgeBg} ${colors.text} border ${colors.border}
-                            shadow-sm
-                          `}
-                        >
-                          <StatusIcon className="size-4 shrink-0" />
-                        </Badge>
-                      </CardHeader>
-                      <CardContent className="space-y-2 relative z-10">
-                        <p className={`text-5xl font-bold ${colors.text}`}>
-                          {item.year}
-                        </p>
-                        <p className={`text-sm font-medium opacity-75 ${colors.text}`}>
-                          {item.daysLeft}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
+              {DEMO_ITEMS.map((item) => (
+                <motion.div key={item.name} whileHover={{ scale: 1.02 }}>
+                  <ExpiryItemCard item={item} demo />
+                </motion.div>
+              ))}
             </div>
           </Card>
         </motion.div>
@@ -277,6 +228,91 @@ export function LandingPage() {
             );
           })}
         </div>
+      </motion.div>
+
+      {/* Privacy & Security Section */}
+      <motion.div
+        id="privacy"
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        className="container mx-auto px-4 py-20 max-w-7xl"
+      >
+        <motion.div variants={itemVariants} className="text-center mb-12">
+          <h2 className="text-5xl md:text-6xl font-bold mb-4 text-foreground">
+            Privacy & Security
+          </h2>
+          <p className="text-xl text-muted-foreground">
+            Your data stays yours. Here&apos;s how we protect it.
+          </p>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <Card className="p-8 max-w-3xl mx-auto bg-card/80 backdrop-blur hover:shadow-xl transition-all">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0">
+                <Shield className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  Your data is secure
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  We use industry-standard practices to keep your information safe.
+                </p>
+              </div>
+            </div>
+            <ul className="space-y-4 text-muted-foreground">
+              <li className="flex gap-3">
+                <span className="text-primary shrink-0">•</span>
+                <span>
+                  <strong className="text-foreground">Data isolation:</strong> Every
+                  item is tied to your account. You only see your own items; no one
+                  else can access them.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-primary shrink-0">•</span>
+                <span>
+                  <strong className="text-foreground">Password security:</strong>{' '}
+                  Passwords are hashed with bcrypt before storage. We never store
+                  plain-text passwords.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-primary shrink-0">•</span>
+                <span>
+                  <strong className="text-foreground">Secure connections:</strong>{' '}
+                  Database connections use SSL. In production, all traffic is over
+                  HTTPS.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-primary shrink-0">•</span>
+                <span>
+                  <strong className="text-foreground">Session security:</strong>{' '}
+                  Signed sessions with NextAuth. Your login state is protected.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-primary shrink-0">•</span>
+                <span>
+                  <strong className="text-foreground">No selling data:</strong> We
+                  do not sell, share, or use your data for analytics or advertising.
+                  Data exists only to run the app.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-primary shrink-0">•</span>
+                <span>
+                  <strong className="text-foreground">You own it:</strong> Delete
+                  items anytime. Your data is not shared with third parties.
+                </span>
+              </li>
+            </ul>
+          </Card>
+        </motion.div>
       </motion.div>
 
       {/* Footer */}
