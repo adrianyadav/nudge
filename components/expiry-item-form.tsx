@@ -190,7 +190,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
             >
               <Label className="text-base">When does it expire?</Label>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="year" className="text-sm text-gray-600">
                     Year <span className="text-red-500">*</span>
@@ -198,6 +198,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   <Input
                     id="year"
                     type="number"
+                    inputMode="numeric"
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
                     required
@@ -214,10 +215,10 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   </Label>
                   <div className="flex gap-2">
                     <Select value={month || undefined} onValueChange={setMonth}>
-                      <SelectTrigger className="border-border focus:ring-ring">
+                      <SelectTrigger className="w-full border-border focus:ring-ring">
                         <SelectValue placeholder="Any month" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" className="max-h-60">
                         {months.map((m) => (
                           <SelectItem key={m.value} value={m.value}>
                             {m.label}
@@ -234,7 +235,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                           setMonth('');
                           setDay('');
                         }}
-                        className="px-2"
+                        className="shrink-0 px-2"
                       >
                         Clear
                       </Button>
@@ -248,10 +249,10 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                   </Label>
                   <div className="flex gap-2">
                     <Select value={day || undefined} onValueChange={setDay} disabled={!month}>
-                      <SelectTrigger className="border-border focus:ring-ring">
+                      <SelectTrigger className="w-full border-border focus:ring-ring">
                         <SelectValue placeholder="Any day" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" className="max-h-60">
                         {days.map((d) => (
                           <SelectItem key={d} value={d}>
                             {d}
@@ -265,7 +266,7 @@ export function ExpiryItemForm({ editingItem, onCancelEdit, onItemCreated }: Exp
                         variant="ghost"
                         size="sm"
                         onClick={() => setDay('')}
-                        className="px-2"
+                        className="shrink-0 px-2"
                       >
                         Clear
                       </Button>
