@@ -147,7 +147,6 @@ export function Navbar() {
             ))}
             {status === 'authenticated' ? (
               <>
-                {userGreeting}
                 <Button
                   onClick={() => {
                     handleSignOut();

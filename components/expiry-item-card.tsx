@@ -9,13 +9,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { updateItemAction } from '@/app/actions/item-actions';
 import { enrichItemWithStatus } from '@/lib/expiry-utils';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -27,21 +20,6 @@ const STATUS_ICONS: Record<ExpiryStatus, typeof CheckCircle2> = {
   approaching: Clock,
   critical: AlertTriangle,
 };
-
-const MONTHS = [
-  { value: '1', label: 'Jan' },
-  { value: '2', label: 'Feb' },
-  { value: '3', label: 'Mar' },
-  { value: '4', label: 'Apr' },
-  { value: '5', label: 'May' },
-  { value: '6', label: 'Jun' },
-  { value: '7', label: 'Jul' },
-  { value: '8', label: 'Aug' },
-  { value: '9', label: 'Sep' },
-  { value: '10', label: 'Oct' },
-  { value: '11', label: 'Nov' },
-  { value: '12', label: 'Dec' },
-];
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
@@ -64,7 +42,7 @@ const ExpiryItemCardComponent = ({
 }: ExpiryItemCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [editingField, setEditingField] = useState<'year' | 'month' | 'day' | null>(null);
+  const [isEditingDate, setIsEditingDate] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const colors =
     item.status === 'safe' ? getAccentCardColors(item.name) : getStatusColors(item.status);
@@ -90,8 +68,6 @@ const ExpiryItemCardComponent = ({
   }, [item.expiry_date, year, monthNum, day]);
 
   const currentYear = new Date().getFullYear();
-  const daysInMonth = getDaysInMonth(localYear, localMonth);
-  const days = Array.from({ length: daysInMonth }, (_, i) => (i + 1).toString());
   const localMonthShort = new Date(2000, localMonth - 1, 1).toLocaleString('en-US', { month: 'short' });
 
   const hasUnsavedChanges =
@@ -110,10 +86,10 @@ const ExpiryItemCardComponent = ({
       const updatedItem = enrichItemWithStatus({ ...item, expiry_date: expiryDate });
       onItemUpdated?.(updatedItem);
       setIsUpdating(true);
-      setEditingField(null);
+      setIsEditingDate(false);
       try {
         const result = await updateItemAction(formData);
-        if (!result?.success) onDateUpdated?.();
+        onDateUpdated?.();
       } catch {
         onDateUpdated?.();
       } finally {
@@ -218,111 +194,64 @@ const ExpiryItemCardComponent = ({
         <div
           className={`space-y-3 ${colors.text} [text-shadow:0_1px_2px_rgba(255,255,255,0.9),0_0_4px_rgba(255,255,255,0.5)]`}
         >
-          <div className="flex items-baseline gap-2">
+          <div className="space-y-2">
             {demo ? (
-              <>
+              <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-bold">{localYear}</span>
                 <span className="text-lg font-medium opacity-75">
                   {localMonthShort} {localDay}
                 </span>
-              </>
-            ) : editingField === 'year' ? (
-              <Input
-                type="number"
-                value={localYear}
-                min={currentYear}
-                max={currentYear + 50}
-                className="h-10 w-24 text-2xl font-bold border-border"
-                autoFocus
-                disabled={isUpdating}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val) && val >= currentYear && val <= currentYear + 50) {
-                    setLocalYear(val);
-                    const maxDay = getDaysInMonth(val, localMonth);
-                    if (localDay > maxDay) setLocalDay(maxDay);
-                  }
-                }}
-                onBlur={() => setEditingField(null)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') setEditingField(null);
-                  if (e.key === 'Escape') {
-                    setLocalYear(year);
-                    setEditingField(null);
-                  }
-                }}
-              />
+              </div>
+            ) : isEditingDate ? (
+              <div className="space-y-3">
+                <label htmlFor={`date-${item.id}`} className="sr-only">
+                  Change expiry date
+                </label>
+                <Input
+                  id={`date-${item.id}`}
+                  type="date"
+                  value={`${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}`}
+                  min={`${currentYear}-01-01`}
+                  max={`${currentYear + 50}-12-31`}
+                  className="h-12 min-h-[48px] text-lg font-semibold border-border"
+                  disabled={isUpdating}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const [y, m, d] = val.split('-').map(Number);
+                      setLocalYear(y);
+                      setLocalMonth(m);
+                      setLocalDay(d);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setLocalYear(year);
+                      setLocalMonth(monthNum);
+                      setLocalDay(day);
+                      setIsEditingDate(false);
+                    }
+                  }}
+                />
+                <p className="text-xs opacity-80">
+                  Tap the date above to use your device&apos;s date picker
+                </p>
+              </div>
             ) : (
               <button
                 type="button"
-                onClick={() => setEditingField('year')}
-                className="text-4xl font-bold cursor-pointer hover:underline hover:bg-foreground/10 rounded px-1 -mx-1 transition-colors"
+                onClick={() => setIsEditingDate(true)}
+                className="flex flex-col items-start gap-1 min-h-[48px] min-w-[120px] justify-center -m-1 p-1 rounded-lg cursor-pointer hover:bg-foreground/10 active:bg-foreground/15 transition-colors text-left"
+                aria-label="Edit expiry date"
               >
-                {localYear}
+                <span className="text-4xl font-bold">{localYear}</span>
+                <span className="text-lg font-medium opacity-75">
+                  {localMonthShort} {localDay}
+                </span>
+                <span className="text-xs opacity-70 underline decoration-dotted">
+                  Tap to change date
+                </span>
               </button>
-            )}
-            {!demo && (
-            <span className="text-lg font-medium opacity-75">
-              {editingField === 'month' ? (
-                <Select
-                  value={localMonth.toString()}
-                  onValueChange={(val) => {
-                    const newMonth = parseInt(val, 10);
-                    setLocalMonth(newMonth);
-                    const maxDay = getDaysInMonth(localYear, newMonth);
-                    if (localDay > maxDay) setLocalDay(maxDay);
-                  }}
-                  open={editingField === 'month'}
-                  onOpenChange={(open) => !open && setEditingField(null)}
-                >
-                  <SelectTrigger className="h-auto py-1 px-2 text-lg font-medium opacity-75 w-fit border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setEditingField('month')}
-                  className="cursor-pointer hover:underline hover:bg-foreground/10 rounded px-1 -mx-1 transition-colors"
-                >
-                  {localMonthShort}
-                </button>
-              )}{' '}
-              {editingField === 'day' ? (
-                <Select
-                  value={localDay.toString()}
-                  onValueChange={(val) => setLocalDay(parseInt(val, 10))}
-                  open={editingField === 'day'}
-                  onOpenChange={(open) => !open && setEditingField(null)}
-                >
-                  <SelectTrigger className="h-auto py-1 px-2 text-lg font-medium opacity-75 w-fit border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {days.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setEditingField('day')}
-                  className="cursor-pointer hover:underline hover:bg-foreground/10 rounded px-1 -mx-1 transition-colors"
-                >
-                  {localDay}
-                </button>
-              )}
-            </span>
             )}
           </div>
           <p
@@ -347,14 +276,31 @@ const ExpiryItemCardComponent = ({
         </div>
 
         {!demo && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          {isEditingDate && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={isUpdating}
+              onClick={() => {
+                setLocalYear(year);
+                setLocalMonth(monthNum);
+                setLocalDay(day);
+                setIsEditingDate(false);
+              }}
+              className="min-h-[44px] text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </Button>
+          )}
           {hasUnsavedChanges && (
             <Button
               onClick={handleUpdateDate}
               variant="default"
               size="sm"
               disabled={isUpdating}
-              className="gap-2 bg-primary hover:bg-primary/90"
+              className="gap-2 min-h-[44px] min-w-[120px] bg-primary hover:bg-primary/90"
             >
               {isUpdating ? (
                 <>
@@ -365,8 +311,8 @@ const ExpiryItemCardComponent = ({
                 </>
               ) : (
                 <>
-                  <Save className="w-3 h-3" />
-                  Update
+                  <Save className="w-4 h-4 shrink-0" />
+                  Save date
                 </>
               )}
             </Button>
